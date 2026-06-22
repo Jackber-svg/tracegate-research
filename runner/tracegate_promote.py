@@ -5,9 +5,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+RUNNER_DIR = Path(__file__).resolve().parent
+if str(RUNNER_DIR) not in sys.path:
+    sys.path.insert(0, str(RUNNER_DIR))
 
 from tracegate_check import Runner
 
@@ -48,7 +53,8 @@ def ensure_gate_report(project: Path, report_path: str) -> dict[str, Any]:
     if not path.is_file():
         raise SystemExit(f"BLOCK: gate report does not exist: {report_path}")
     report = load_json(path)
-    if report.get("all_required_gates_pass") is not True:
+    all_required_gates_pass = report.get("all_required_gates_pass")
+    if not isinstance(all_required_gates_pass, bool) or all_required_gates_pass is not True:
         raise SystemExit(f"BLOCK: gate report does not declare all_required_gates_pass=true: {report_path}")
     return report
 

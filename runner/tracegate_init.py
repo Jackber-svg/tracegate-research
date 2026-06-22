@@ -15,12 +15,12 @@ VALID_MODES = {"DISCOVERY", "STAGING", "VALIDATION"}
 VALID_PROFILES = {"lite", "full"}
 
 
-def sha256_bytes(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
-
-
 def sha256_file(path: Path) -> str:
-    return sha256_bytes(path.read_bytes())
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return "sha256:" + h.hexdigest()
 
 
 def write_text(path: Path, text: str) -> None:
