@@ -1,0 +1,7 @@
+interface:
+  display_name: "TraceGate"
+  short_description: "Fail-closed evidence gates for long-running agent work"
+  default_prompt: "Use $tracegate to audit this project and tell me whether it can safely promote a verified checkpoint."
+
+policy:
+  allow_implicit_invocation: true
