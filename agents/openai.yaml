@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $tracegate to audit this project and tell me whether it can safely promote a verified checkpoint."
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false
