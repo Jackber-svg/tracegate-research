@@ -153,9 +153,9 @@ Domain gates are required by default. They can be optional only if the rule has 
   "current_artifact": {
     "artifact_id": "ART-001",
     "type": "model",
-    "path": "model.mph",
+    "path": "model.artifact",
     "hash": "sha256:...",
-    "adapter_id": "comsol"
+    "adapter_id": "tool_adapter"
   },
   "last_checkpoint": {
     "checkpoint_id": "CHK-003",
@@ -332,9 +332,9 @@ Registration is not enough. A parameter can be registered and still be wrong bec
 {
   "version": "1.0",
   "sources": [{
-    "source_id": "SRC-EXAMPLE-FIG7",
+    "source_id": "SRC-EXAMPLE-FIGURE",
     "artifact_id": "ART-SOURCE-PDF-001",
-    "locator": "Fig.7a",
+    "locator": "Fig.2a",
     "source_status": "SOURCE_INCOMPLETE",
     "source_incomplete_reason": "coefficients appear only as a plotted curve, not as a table",
     "extraction_method": "digitization",
@@ -343,8 +343,8 @@ Registration is not enough. A parameter can be registered and still be wrong bec
     "allowed_claim_level": "FIGURE_DIGITIZED"
   }],
   "values": [{
-    "parameter": "D_Li_CF",
-    "source_id": "SRC-EXAMPLE-FIG7",
+    "parameter": "k_transport",
+    "source_id": "SRC-EXAMPLE-FIGURE",
     "original_value": {"type": "range", "data": {"min": 0.0, "max": 4.0}, "unit": "1e-12 m2/s"},
     "encoded_value": {"type": "range", "data": {"min": 0.0, "max": 4.0e-12}, "unit": "m2/s"},
     "conversion_factor": 1e-12,
@@ -375,7 +375,7 @@ Example decision row:
   "decision_kind": "source_incomplete_resolution",
   "status": "ACCEPTED",
   "severity": "WARN",
-  "applies_to": {"source_id": "SRC-EXAMPLE-FIG7", "parameter": "D_Li_CF"},
+  "applies_to": {"source_id": "SRC-EXAMPLE-FIGURE", "parameter": "k_transport"},
   "source_status": "SOURCE_INCOMPLETE",
   "source_incomplete_reason": "Coefficients are available only in plotted form.",
   "extraction_method": "digitization",
@@ -420,12 +420,12 @@ The registry separates source kind, evidence strength, source completeness, base
 {
   "version": "1.0",
   "rows": [{
-    "parameter": "D_Li_CF",
+    "parameter": "k_transport",
     "value": {"type": "number", "data": 3.6e-12, "unit": "m2/s"},
     "source_class": "literature_range",
     "source_anchor": {
-      "source_id": "SRC-EXAMPLE-FIG7",
-      "locator": "Fig.7a",
+      "source_id": "SRC-EXAMPLE-FIGURE",
+      "locator": "Fig.2a",
       "original_value": {"type": "number", "data": 3.6, "unit": "1e-12 m2/s"},
       "conversion_factor": 1e-12
     },
@@ -437,7 +437,7 @@ The registry separates source kind, evidence strength, source completeness, base
     "requires_human_acceptance": false,
     "sweep_status": "PASS",
     "sweep_report_id": "SWEEP-001",
-    "implementation_source": "MODEL_STATE.json:$.parameters[?(@.name=='D_Li_CF')].value",
+    "implementation_source": "MODEL_STATE.json:$.parameters[?(@.name=='k_transport')].value",
     "implementation_value": {"type": "number", "data": 3.6e-12, "unit": "m2/s"},
     "comparison": {"operator": "numeric_close", "tolerance": 1e-14, "unit_policy": "normalize"},
     "row_hash": "sha256:...",
@@ -477,10 +477,10 @@ An extension switch being off does not prove the extension is absent. Runtime ar
     "switch_parameter": "enable_stress_diffusion",
     "expected_switch_value": false,
     "forbidden_tokens": [
-      "stressDiffusion",
-      "D_theta_cf_ext",
-      "sigma_h_coupling",
-      "Omega_n_ext"
+      "extensionCoupling",
+      "transport_ext",
+      "field_coupling",
+      "coupling_volume_ext"
     ],
     "allowed_contexts": [
       "parameter_definition",
