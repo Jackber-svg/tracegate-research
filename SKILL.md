@@ -1,6 +1,6 @@
 ---
 name: tracegate
-description: Fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, source provenance checks, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
+description: Runner-backed fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, source provenance checks, equation-form checks, extension residual scans, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
 ---
 
 # TraceGate Research

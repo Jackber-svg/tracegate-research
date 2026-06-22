@@ -1,6 +1,6 @@
 interface:
   display_name: "TraceGate Research"
-  short_description: "Fail-closed evidence gates for research agent work"
+  short_description: "Runner-backed fail-closed gates for auditable research-agent workflows"
   default_prompt: "Use $tracegate to audit this research project and tell me whether it can safely promote a verified checkpoint."
 
 policy:

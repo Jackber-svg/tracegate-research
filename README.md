@@ -1,12 +1,14 @@
 # TraceGate Research
 
-TraceGate Research is a file-grounded governance protocol for long-running research agent work. It is designed for tasks in which an AI agent must preserve hypotheses, constraints, source evidence, intermediate decisions, computational artifacts, and reproducible state across many turns, sessions, tools, and handoffs.
+TraceGate Research is a runner-backed, file-grounded governance protocol for long-running research agent work. It is designed for tasks in which an AI agent must preserve hypotheses, constraints, source evidence, intermediate decisions, computational artifacts, and reproducible state across many turns, sessions, tools, and handoffs.
 
-The motivation is a recurring failure mode in complex research workflows: as context grows, early constraints become diluted, missing evidence is replaced by plausible proxies, and partial results are promoted as if they were verified. This tendency is especially harmful in scientific modeling, computational simulation, research-code generation, data-analysis pipelines, and literature-derived parameterization, where a complete-looking answer can be worse than an explicit stop.
+The project turns agent-assisted research into an auditable state machine. Contracts define what counts as acceptable evidence. Manifests bind artifacts to hashes. Decisions record human or external approvals. Gate reports determine whether the next action is allowed. Dependency-free Python runners enforce the basic state, schema, source, equation, extension, hash, decision, and checkpoint gates that an agent should not be able to hand-wave.
 
-TraceGate Research treats agent-assisted research as an auditable state machine rather than a conversational stream. Contracts define what counts as acceptable evidence. Registries record where parameters and claims come from. Manifests bind artifacts to hashes. Decisions record human or external approvals. Gate reports determine whether the next action is allowed. A new agent should be able to recover the research state from files alone, without relying on chat memory.
+The motivation is a recurring failure mode in complex research workflows: as context grows, early constraints become diluted, missing evidence is replaced by plausible proxies, equation forms drift behind plausible outputs, and partial results are promoted as if they were verified. This tendency is especially harmful in scientific modeling, computational simulation, research-code generation, data-analysis pipelines, and literature-derived parameterization, where a complete-looking answer can be worse than an explicit stop.
 
-The protocol is fail-closed by default. If a required source is incomplete, a unit conversion is unverified, an equation form has drifted, a disabled extension still appears in runtime artifacts, or an external audit reports unresolved findings, the project blocks until the issue is recorded and resolved. TraceGate Research does not claim that an output is true. It makes unsupported continuation harder than honest interruption.
+The current release ships with a minimal passing fixture, JSON schemas, cross-platform line-ending protection, regression tests, and GitHub Actions CI across Linux, Windows, and macOS. A fresh clone can run `python runner/tracegate_check.py examples/minimal_project` and recover a valid project state from files alone, without relying on chat memory.
+
+The protocol is fail-closed by default. If a required source is incomplete, a unit conversion is unverified, an equation form has drifted, a disabled extension still appears in runtime artifacts, a decision lacks approval provenance, or an external audit reports unresolved findings, the project blocks until the issue is recorded and resolved. TraceGate Research does not claim that an output is true. It makes unsupported continuation harder than honest interruption.
 
 TraceGate Research is not a model, solver, benchmark, or production engineering framework. It is a reusable control layer for research projects that need provenance, reproducibility, cold-start recovery, literature-aware parameter tracking, and defensible checkpoint promotion.
 
@@ -15,7 +17,9 @@ TraceGate Research is not a model, solver, benchmark, or production engineering 
 - Preserve research authority in files instead of chat history.
 - Make constraints, source evidence, decisions, and checkpoints machine-checkable.
 - Prevent proxy laundering, evidence drift, equation-form drift, and self-audit leniency.
+- Provide dependency-free runners for state closure, schema checks, decision audits, source locks, equation-form checks, extension residual scans, and baseline promotion.
 - Support cold-start handoff, where a new agent reconstructs state from the project directory.
+- Keep cloned fixtures hash-stable across platforms.
 - Keep failure visible by blocking unsafe continuation instead of silently repairing the story.
 
 ## Install for Codex
