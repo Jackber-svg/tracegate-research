@@ -40,9 +40,9 @@ Then start a new Codex session and ask:
 Use $tracegate to audit this project and tell me whether it can safely promote a verified checkpoint.
 ```
 
-## Minimal Runner
+## Runners
 
-TraceGate Research includes a minimal runner for state, hash, manifest, and decision checks:
+TraceGate Research includes small, dependency-free runners for the core file closure loop:
 
 ```bash
 python runner/tracegate_check.py examples/minimal_project
@@ -55,7 +55,25 @@ TraceGate Research Check
 Status: PASS
 ```
 
-The runner is intentionally conservative. It does not prove scientific correctness or execute domain-specific gates. It verifies the basic file-grounded closure that an agent must not hand-wave: required files, contract hashes, artifact manifest hash, manifest-listed artifact hashes, decision log parsing, open decisions, current artifact hash, and last checkpoint report.
+Available runners:
+
+```text
+runner/tracegate_check.py       Check required files, hashes, manifest closure, decisions, and checkpoint state.
+runner/tracegate_init.py        Create a minimal TraceGate project skeleton.
+runner/tracegate_fix_hashes.py  Refresh declared hashes after an intentional file update.
+runner/tracegate_promote.py     Promote a passing project state to BASELINE.
+```
+
+The runners are intentionally conservative. They do not prove scientific correctness or execute domain-specific gates. They verify the basic file-grounded closure that an agent must not hand-wave: required files, contract hashes, artifact manifest hash, manifest-listed artifact hashes, decision log parsing, open decisions, current artifact hash, and last checkpoint report.
+
+Typical workflow:
+
+```bash
+python runner/tracegate_init.py path/to/project --project my_project
+python runner/tracegate_check.py path/to/project
+python runner/tracegate_fix_hashes.py path/to/project
+python runner/tracegate_promote.py path/to/project
+```
 
 ## Use with Other Agents
 
@@ -76,7 +94,7 @@ AGENTS.md                Universal agent entry
 CLAUDE.md                Claude Code style entry
 references/protocol.md   Full TraceGate Research protocol
 agents/openai.yaml       Codex UI metadata
-runner/tracegate_check.py Minimal state/hash/manifest runner
+runner/                  Minimal state/hash/manifest runners
 schemas/                 JSON schemas for core TraceGate files
 examples/minimal_project Minimal passing project fixture
 ```

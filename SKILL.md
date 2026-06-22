@@ -30,11 +30,12 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
    - `DECISIONS.jsonl`
    - `GATE_REPORTS/`
 2. Run the startup protocol from `references/protocol.md`.
-3. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
-4. Treat missing required files, hash mismatches, unresolved `BLOCK` or `CRITICAL` findings, and undeclared proxy/source gaps as blockers.
-5. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
-6. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
-7. For baseline promotion, require all mode/profile gates to pass and zero open decisions.
+3. When a project directory does not exist, use `python runner/tracegate_init.py <project_dir> --project <name>` to create the minimal file skeleton.
+4. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
+5. After an intentional file edit, use `python runner/tracegate_fix_hashes.py <project_dir>` to refresh declared hashes, then rerun `tracegate_check.py`.
+6. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
+7. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
+8. For baseline promotion, use `python runner/tracegate_promote.py <project_dir>` only after checks pass and zero open decisions remain.
 
 ## Fail-Closed Conditions
 
@@ -43,6 +44,7 @@ Stop and report `BLOCK` when:
 - `CONTRACT.yaml` or listed task-contract files cannot be read or hash-verified.
 - `ARTIFACT_MANIFEST.json` does not match `STATE.json`.
 - A required gate is declared but its manifest or input artifact is missing.
+- `tracegate_promote.py` refuses promotion or post-promotion check does not pass.
 - A parameter has `SOURCE_INCOMPLETE` without an accepted decision.
 - A source value, encoded value, unit conversion, or implementation value cannot be reconciled.
 - An extension is disabled but active runtime artifacts still contain forbidden tokens.

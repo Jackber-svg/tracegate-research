@@ -638,6 +638,9 @@ schemas/
   ARTIFACT_MANIFEST.schema.json
 runner/
   tracegate_check.py
+  tracegate_init.py
+  tracegate_fix_hashes.py
+  tracegate_promote.py
   gate_runner.py
   hash_manifest.py
   source_lock.py
