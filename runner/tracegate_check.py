@@ -332,7 +332,8 @@ def main(argv: list[str] | None = None) -> int:
     report = runner.run()
 
     if args.report:
-        out = rel(Path(args.project_dir).resolve(), args.report)
+        report_path = Path(args.report)
+        out = report_path if report_path.is_absolute() else Path.cwd() / report_path
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
