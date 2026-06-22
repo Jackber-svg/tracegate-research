@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/CONTRACT.schema.json",
+  "title": "TraceGate Research CONTRACT.yaml parsed form",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "project", "rules"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "layer", "category", "check_type", "fail_level"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "layer": {
+            "enum": ["core", "adapter", "domain", "external"]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "check_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_file": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "fail_level": {
+            "enum": ["INFO", "WARN", "BLOCK", "CRITICAL"]
+          },
+          "output_artifact": {
+            "type": "string"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "optional_reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

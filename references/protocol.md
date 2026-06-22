@@ -637,6 +637,7 @@ schemas/
   DECISIONS.schema.json
   ARTIFACT_MANIFEST.schema.json
 runner/
+  tracegate_check.py
   gate_runner.py
   hash_manifest.py
   source_lock.py

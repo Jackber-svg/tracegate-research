@@ -30,10 +30,11 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
    - `DECISIONS.jsonl`
    - `GATE_REPORTS/`
 2. Run the startup protocol from `references/protocol.md`.
-3. Treat missing required files, hash mismatches, unresolved `BLOCK` or `CRITICAL` findings, and undeclared proxy/source gaps as blockers.
-4. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
-5. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
-6. For baseline promotion, require all mode/profile gates to pass and zero open decisions.
+3. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
+4. Treat missing required files, hash mismatches, unresolved `BLOCK` or `CRITICAL` findings, and undeclared proxy/source gaps as blockers.
+5. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
+6. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
+7. For baseline promotion, require all mode/profile gates to pass and zero open decisions.
 
 ## Fail-Closed Conditions
 

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/STATE.schema.json",
+  "title": "TraceGate Research STATE.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "project",
+    "mode",
+    "profile",
+    "contract",
+    "current_artifact",
+    "artifact_manifest_hash",
+    "open_decisions"
+  ],
+  "properties": {
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "enum": ["DISCOVERY", "STAGING", "VALIDATION", "BASELINE"]
+    },
+    "profile": {
+      "enum": ["lite", "full"]
+    },
+    "contract": {
+      "type": "object",
+      "required": ["files", "primary"],
+      "properties": {
+        "files": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^sha256:[a-fA-F0-9]{64}$"
+          }
+        },
+        "primary": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "current_artifact": {
+      "type": "object",
+      "required": ["artifact_id", "type", "path", "hash"],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-fA-F0-9]{64}$"
+        },
+        "adapter_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "last_checkpoint": {
+      "type": "object",
+      "properties": {
+        "checkpoint_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "gate_report": {
+          "type": "string"
+        },
+        "all_required_gates_pass": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifact_manifest_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-fA-F0-9]{64}$"
+    },
+    "external_anchor": {
+      "type": "object"
+    },
+    "next_allowed_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

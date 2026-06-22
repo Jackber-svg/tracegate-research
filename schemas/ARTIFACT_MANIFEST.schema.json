@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/ARTIFACT_MANIFEST.schema.json",
+  "title": "TraceGate Research ARTIFACT_MANIFEST.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "artifacts"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["artifact_id", "type", "path", "status"],
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "model",
+              "code",
+              "data",
+              "config",
+              "document",
+              "result",
+              "gate_report",
+              "adapter",
+              "adapter_output",
+              "api_request",
+              "api_response",
+              "database_snapshot",
+              "decision_log",
+              "manifest",
+              "contract",
+              "registry",
+              "checkpoint",
+              "approval_record",
+              "model_state",
+              "source_manifest",
+              "equation_manifest",
+              "extension_keyword_manifest",
+              "task_contract",
+              "unit_registry"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^sha256:[a-fA-F0-9]{64}$"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "verified",
+              "staging",
+              "evidence",
+              "archived",
+              "superseded",
+              "rejected",
+              "failed",
+              "external",
+              "unknown"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

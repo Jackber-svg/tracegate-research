@@ -1,0 +1,17 @@
+version: "1.0"
+project: "minimal_project"
+includes: []
+
+rules:
+  - id: CORE01
+    layer: core
+    category: contract_load_gate
+    check_type: contract_load_check
+    input_file: CONTRACT.yaml
+    params:
+      contract_files: ["CONTRACT.yaml"]
+      expected_hash_source: STATE.json:$.contract.files
+      require_readable: true
+      block_on_hash_mismatch: true
+    fail_level: BLOCK
+    output_artifact: GATE_REPORTS/contract_load.json

@@ -1,0 +1,11 @@
+{
+  "gate_report_id": "GATE-MIN-BOOTSTRAP",
+  "status": "PASS",
+  "checks": [
+    {
+      "status": "PASS",
+      "code": "bootstrap",
+      "message": "Minimal TraceGate example bootstrapped."
+    }
+  ]
+}

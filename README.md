@@ -40,6 +40,23 @@ Then start a new Codex session and ask:
 Use $tracegate to audit this project and tell me whether it can safely promote a verified checkpoint.
 ```
 
+## Minimal Runner
+
+TraceGate Research includes a minimal runner for state, hash, manifest, and decision checks:
+
+```bash
+python runner/tracegate_check.py examples/minimal_project
+```
+
+Expected result:
+
+```text
+TraceGate Research Check
+Status: PASS
+```
+
+The runner is intentionally conservative. It does not prove scientific correctness or execute domain-specific gates. It verifies the basic file-grounded closure that an agent must not hand-wave: required files, contract hashes, artifact manifest hash, manifest-listed artifact hashes, decision log parsing, open decisions, current artifact hash, and last checkpoint report.
+
 ## Use with Other Agents
 
 Agents that do not support Codex skills can still use TraceGate Research by reading:
@@ -59,6 +76,9 @@ AGENTS.md                Universal agent entry
 CLAUDE.md                Claude Code style entry
 references/protocol.md   Full TraceGate Research protocol
 agents/openai.yaml       Codex UI metadata
+runner/tracegate_check.py Minimal state/hash/manifest runner
+schemas/                 JSON schemas for core TraceGate files
+examples/minimal_project Minimal passing project fixture
 ```
 
 ## Core Rule

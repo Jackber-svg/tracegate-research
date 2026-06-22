@@ -1,0 +1,35 @@
+{
+  "project": "minimal_project",
+  "mode": "STAGING",
+  "profile": "lite",
+  "contract": {
+    "files": {
+      "CONTRACT.yaml": "sha256:c3d2e635a49e1b11753d2398e4503eef39a7ff64b2e980287d550072ba4ae73f"
+    },
+    "primary": "CONTRACT.yaml"
+  },
+  "current_artifact": {
+    "artifact_id": "ART-CONTRACT-001",
+    "type": "contract",
+    "path": "CONTRACT.yaml",
+    "hash": "sha256:c3d2e635a49e1b11753d2398e4503eef39a7ff64b2e980287d550072ba4ae73f"
+  },
+  "last_checkpoint": {
+    "checkpoint_id": "CHK-MIN-001",
+    "timestamp": "2026-06-23T00:00:00Z",
+    "gate_report": "GATE_REPORTS/bootstrap.json",
+    "all_required_gates_pass": true
+  },
+  "artifact_manifest_hash": "sha256:6d4820adc0f423d829be1b153a78af8a2c85a68b84412282e07a091f896e3680",
+  "external_anchor": {
+    "type": "none",
+    "value": null
+  },
+  "next_allowed_actions": [
+    "continue_staging"
+  ],
+  "blocked_actions": [
+    "promote_baseline_without_validation"
+  ],
+  "open_decisions": []
+}

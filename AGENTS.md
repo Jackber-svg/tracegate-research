@@ -33,6 +33,16 @@ PARAMETER_REGISTRY.json
 SOURCE_MANIFEST.json
 ```
 
+## Minimal Runner
+
+If `runner/tracegate_check.py` is available, run it before continuing:
+
+```bash
+python runner/tracegate_check.py <project_dir>
+```
+
+Treat runner `BLOCK` as authoritative. Treat runner `WARN` as unresolved unless the user or an external audit explicitly accepts it.
+
 ## Stop Conditions
 
 Report `BLOCK` instead of continuing when:

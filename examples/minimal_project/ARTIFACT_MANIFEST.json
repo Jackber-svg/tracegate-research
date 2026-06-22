@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "artifacts": [
+    {
+      "artifact_id": "ART-CONTRACT-001",
+      "type": "contract",
+      "path": "CONTRACT.yaml",
+      "hash": "sha256:c3d2e635a49e1b11753d2398e4503eef39a7ff64b2e980287d550072ba4ae73f",
+      "status": "current",
+      "description": "Minimal project contract."
+    },
+    {
+      "artifact_id": "ART-DECISIONS-001",
+      "type": "decision_log",
+      "path": "DECISIONS.jsonl",
+      "hash": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "status": "current",
+      "description": "Empty decision log."
+    },
+    {
+      "artifact_id": "ART-GATE-BOOTSTRAP-001",
+      "type": "gate_report",
+      "path": "GATE_REPORTS/bootstrap.json",
+      "hash": "sha256:1e7341e5d424a0abbb132c5f5a87f225a9177206a2e6761a8baf0b742235e3bb",
+      "status": "verified",
+      "description": "Bootstrap gate report."
+    }
+  ]
+}
