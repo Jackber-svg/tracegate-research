@@ -6,6 +6,8 @@ The protocol addresses a recurring failure mode in agent-assisted research: as c
 
 TraceGate treats the workflow as an auditable state machine. Contracts define acceptable evidence, manifests bind artifacts to hashes, decision logs record exceptions, and gate reports control continuation. Dependency-free runners check state closure, schemas, decisions, source locks, equation forms, extension residues, and baseline promotion.
 
+The runner layer automates the routine checks that agents most often skip. It can initialize a minimal project, verify hashes and manifests, repair declared hash chains after intentional edits, audit decisions, compare registered parameters against source manifests, detect equation-form drift, scan disabled extensions for residual tokens, and promote only passing states to `BASELINE`.
+
 TraceGate is fail-closed by default. It does not prove that a result is true, but makes unsupported continuation visible and mechanically harder. The current release includes schemas, a passing fixture, regression tests, GitHub Actions CI, and line-ending controls that keep cloned fixtures hash-stable across platforms.
 
 ## Design Goals
