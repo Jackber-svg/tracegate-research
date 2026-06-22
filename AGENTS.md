@@ -1,6 +1,6 @@
-# TraceGate Agent Instructions
+# TraceGate Research Agent Instructions
 
-Use TraceGate when working on a long-running project that needs file-grounded state, evidence, gate reports, decisions, or reproducible checkpoints.
+Use TraceGate Research when working on a long-running research project that needs file-grounded state, source evidence, gate reports, decisions, or reproducible checkpoints.
 
 ## Required Reading
 

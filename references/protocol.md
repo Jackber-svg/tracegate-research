@@ -1,10 +1,10 @@
-# Gate-Driven Agent Framework - Release 1.0
+# TraceGate Research Framework - Release 1.0
 
 ## Positioning
 
-Gate-Driven Agent Framework is a domain-independent governance protocol for long-running agent projects. It prevents agents from silently drifting from strict task contracts into convenient completion mode by forcing state, evidence, artifacts, decisions, parameters, adapter outputs, and checkpoints through explicit gates.
+TraceGate Research is a file-grounded governance protocol for long-running research agent projects. It prevents agents from silently drifting from strict research contracts into convenient completion mode by forcing state, evidence, artifacts, decisions, parameters, adapter outputs, and checkpoints through explicit gates.
 
-The framework is designed for projects where a wrong but complete-looking answer is worse than a blocked task: simulation, scientific modeling, data pipelines, code generation, literature-derived parameterization, and any workflow that must survive handoff between agents or sessions.
+The framework is designed for research workflows where a wrong but complete-looking answer is worse than a blocked task: scientific modeling, computational simulation, research-code generation, data-analysis pipelines, literature-derived parameterization, and any workflow that must survive handoff between agents or sessions.
 
 The core rule is simple:
 
@@ -17,7 +17,7 @@ Gate-Driven Agent does not prove that a result is true. It makes drift, missing 
 
 ## Six Questions
 
-Every long-running agent project must answer six questions from files, not from conversation history:
+Every long-running research agent project must answer six questions from files, not from conversation history:
 
 ```text
 Where are we now?          STATE.json
@@ -548,7 +548,7 @@ external_audit_gate passes only if:
   auditor identity is recorded as human, external_model, separate_runner, or separate_agent
 ```
 
-External audit is optional in DISCOVERY and STAGING, but recommended for BASELINE if the project contains scientific claims, irreversible edits, expensive simulation outputs, or user-facing deliverables.
+External audit is optional in DISCOVERY and STAGING, but recommended for BASELINE if the project contains scientific claims, irreversible edits, expensive simulation outputs, manuscript-facing artifacts, or public research deliverables.
 
 ## 14. Startup Protocol
 
@@ -649,7 +649,7 @@ references/
   examples.md
 examples/
   minimal_project/
-  simulation_project/
+  research_simulation_project/
   code_project/
 ```
 
@@ -657,4 +657,4 @@ examples/
 
 ## One-Sentence Summary
 
-Gate-Driven Agent Framework Release 1.0 is a file-grounded, schema-bound, runner-safe protocol for long-running agent projects: contract files prevent constraint dilution, source locks prevent evidence laundering, equation and extension gates prevent implementation drift, external audits reduce self-leniency, and checkpoints allow new agents to continue from verified project state instead of fragile chat memory.
+TraceGate Research Release 1.0 is a file-grounded, schema-bound, runner-safe protocol for long-running research agent projects: contract files prevent constraint dilution, source locks prevent evidence laundering, equation and extension gates prevent implementation drift, external audits reduce self-leniency, and checkpoints allow new agents to continue from verified research state instead of fragile chat memory.

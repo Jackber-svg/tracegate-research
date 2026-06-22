@@ -1,11 +1,11 @@
 ---
 name: tracegate
-description: Fail-closed evidence and checkpoint governance for long-running agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for simulations, scientific modeling, code generation, parameter/source audits, agent handoffs, cold-start recovery, reproducible checkpoints, or any project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
+description: Fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, source provenance checks, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
 ---
 
-# TraceGate
+# TraceGate Research
 
-Use TraceGate to keep long-running agent work restartable, auditable, and fail-closed.
+Use TraceGate Research to keep long-running research agent work restartable, auditable, and fail-closed.
 
 ## Core Rule
 
@@ -23,7 +23,7 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 
 ## Workflow
 
-1. Locate or create the TraceGate project files:
+1. Locate or create the TraceGate Research project files:
    - `STATE.json`
    - `CONTRACT.yaml`
    - `ARTIFACT_MANIFEST.json`

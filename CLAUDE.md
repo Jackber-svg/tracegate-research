@@ -1,8 +1,8 @@
-# TraceGate for Claude Code
+# TraceGate Research for Claude Code
 
-This repository contains the TraceGate protocol for fail-closed, evidence-gated agent work.
+This repository contains the TraceGate Research protocol for fail-closed, evidence-gated research agent work.
 
-Before modifying a project that claims to use TraceGate:
+Before modifying a research project that claims to use TraceGate Research:
 
 1. Read `references/protocol.md`.
 2. Locate `STATE.json`, `CONTRACT.yaml`, `ARTIFACT_MANIFEST.json`, `DECISIONS.jsonl`, and `GATE_REPORTS/`.
