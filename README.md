@@ -1,16 +1,12 @@
 # TraceGate Research
 
-TraceGate Research is a runner-backed, file-grounded governance protocol for long-running research agent work. It is designed for tasks in which an AI agent must preserve hypotheses, constraints, source evidence, intermediate decisions, computational artifacts, and reproducible state across many turns, sessions, tools, and handoffs.
+TraceGate Research is a runner-backed governance protocol for long-running research-agent workflows. It keeps hypotheses, constraints, source evidence, decisions, artifacts, and checkpoints in versioned files rather than chat memory, so a new agent can recover project state from the repository alone.
 
-The project turns agent-assisted research into an auditable state machine. Contracts define what counts as acceptable evidence. Manifests bind artifacts to hashes. Decisions record human or external approvals. Gate reports determine whether the next action is allowed. Dependency-free Python runners enforce the basic state, schema, source, equation, extension, hash, decision, and checkpoint gates that an agent should not be able to hand-wave.
+The protocol addresses a recurring failure mode in agent-assisted research: as context grows, early constraints become diluted, missing evidence is replaced by plausible proxies, and partial outputs are promoted as verified. This risk is acute in computational modelling, simulation, literature-derived parameterization, and research-code generation, where a coherent answer can be less useful than a principled stop.
 
-The motivation is a recurring failure mode in complex research workflows: as context grows, early constraints become diluted, missing evidence is replaced by plausible proxies, equation forms drift behind plausible outputs, and partial results are promoted as if they were verified. This tendency is especially harmful in scientific modeling, computational simulation, research-code generation, data-analysis pipelines, and literature-derived parameterization, where a complete-looking answer can be worse than an explicit stop.
+TraceGate treats the workflow as an auditable state machine. Contracts define acceptable evidence, manifests bind artifacts to hashes, decision logs record exceptions, and gate reports control continuation. Dependency-free runners check state closure, schemas, decisions, source locks, equation forms, extension residues, and baseline promotion.
 
-The current release ships with a minimal passing fixture, JSON schemas, cross-platform line-ending protection, regression tests, and GitHub Actions CI across Linux, Windows, and macOS. A fresh clone can run `python runner/tracegate_check.py examples/minimal_project` and recover a valid project state from files alone, without relying on chat memory.
-
-The protocol is fail-closed by default. If a required source is incomplete, a unit conversion is unverified, an equation form has drifted, a disabled extension still appears in runtime artifacts, a decision lacks approval provenance, or an external audit reports unresolved findings, the project blocks until the issue is recorded and resolved. TraceGate Research does not claim that an output is true. It makes unsupported continuation harder than honest interruption.
-
-TraceGate Research is not a model, solver, benchmark, or production engineering framework. It is a reusable control layer for research projects that need provenance, reproducibility, cold-start recovery, literature-aware parameter tracking, and defensible checkpoint promotion.
+TraceGate is fail-closed by default. It does not prove that a result is true, but makes unsupported continuation visible and mechanically harder. The current release includes schemas, a passing fixture, regression tests, GitHub Actions CI, and line-ending controls that keep cloned fixtures hash-stable across platforms.
 
 ## Design Goals
 
