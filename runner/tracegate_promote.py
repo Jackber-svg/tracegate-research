@@ -15,13 +15,13 @@ if str(RUNNER_DIR) not in sys.path:
     sys.path.insert(0, str(RUNNER_DIR))
 
 from tracegate_check import Runner
+from tracegate_common import load_json as read_json, rel, status_code
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:  # noqa: BLE001
-        raise SystemExit(f"BLOCK: failed to read {path}: {exc}") from exc
+    data, err = read_json(path)
+    if err:
+        raise SystemExit(f"BLOCK: failed to read {path}: {err}")
     if not isinstance(data, dict):
         raise SystemExit(f"BLOCK: {path} must contain a JSON object")
     return data
@@ -33,19 +33,6 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
 
 def run_check(project: Path) -> dict[str, Any]:
     return Runner(project).run()
-
-
-def status_code(report: dict[str, Any]) -> int:
-    if report["status"] == "BLOCK":
-        return 2
-    if report["status"] == "WARN":
-        return 1
-    return 0
-
-
-def rel(project: Path, maybe_path: str) -> Path:
-    p = Path(maybe_path)
-    return p if p.is_absolute() else project / p
 
 
 def ensure_gate_report(project: Path, report_path: str) -> dict[str, Any]:

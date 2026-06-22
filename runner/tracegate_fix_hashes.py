@@ -12,16 +12,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
+RUNNER_DIR = Path(__file__).resolve().parent
+if str(RUNNER_DIR) not in sys.path:
+    sys.path.insert(0, str(RUNNER_DIR))
 
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
-    return "sha256:" + h.hexdigest()
+from tracegate_common import load_json as read_json, rel, sha256_file
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -29,10 +28,9 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:  # noqa: BLE001
-        raise SystemExit(f"BLOCK: failed to read {path}: {exc}") from exc
+    data, err = read_json(path)
+    if err:
+        raise SystemExit(f"BLOCK: failed to read {path}: {err}")
     if not isinstance(data, dict):
         raise SystemExit(f"BLOCK: {path} must contain a JSON object")
     return data
@@ -44,11 +42,6 @@ def json_bytes(data: dict[str, Any]) -> bytes:
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_bytes(json_bytes(data))
-
-
-def rel(project: Path, maybe_path: str) -> Path:
-    p = Path(maybe_path)
-    return p if p.is_absolute() else project / p
 
 
 def update_hash(target: dict[str, Any], key: str, actual: str, label: str, changes: list[str]) -> bool:

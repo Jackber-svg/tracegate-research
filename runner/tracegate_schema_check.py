@@ -24,7 +24,9 @@ SCHEMA_MAP = {
 }
 
 
-def type_matches(value: Any, expected: str) -> bool:
+def type_matches(value: Any, expected: str | list[str]) -> bool:
+    if isinstance(expected, list):
+        return any(type_matches(value, item) for item in expected)
     if expected == "object":
         return isinstance(value, dict)
     if expected == "array":
@@ -40,10 +42,55 @@ def type_matches(value: Any, expected: str) -> bool:
     return True
 
 
-def validate_schema(value: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
+def resolve_ref(root_schema: dict[str, Any], ref: str) -> dict[str, Any] | None:
+    if not ref.startswith("#/"):
+        return None
+    node: Any = root_schema
+    for part in ref[2:].split("/"):
+        part = part.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and part in node:
+            node = node[part]
+        else:
+            return None
+    return node if isinstance(node, dict) else None
+
+
+def validate_schema(value: Any, schema: dict[str, Any], path: str = "$", root_schema: dict[str, Any] | None = None) -> list[str]:
+    if root_schema is None:
+        root_schema = schema
     errors: list[str] = []
+    if "$ref" in schema:
+        resolved = resolve_ref(root_schema, str(schema["$ref"]))
+        if resolved is None:
+            return [f"{path}: unsupported or unresolved $ref {schema['$ref']!r}"]
+        return validate_schema(value, resolved, path, root_schema)
+
+    if "allOf" in schema:
+        for idx, sub_schema in enumerate(schema["allOf"]):
+            if isinstance(sub_schema, dict):
+                errors.extend(validate_schema(value, sub_schema, f"{path}.allOf[{idx}]", root_schema))
+
+    if "anyOf" in schema:
+        matches = []
+        for sub_schema in schema["anyOf"]:
+            if isinstance(sub_schema, dict):
+                sub_errors = validate_schema(value, sub_schema, path, root_schema)
+                matches.append(not sub_errors)
+        if not any(matches):
+            errors.append(f"{path}: does not match anyOf")
+
+    if "oneOf" in schema:
+        match_count = 0
+        for sub_schema in schema["oneOf"]:
+            if isinstance(sub_schema, dict):
+                sub_errors = validate_schema(value, sub_schema, path, root_schema)
+                if not sub_errors:
+                    match_count += 1
+        if match_count != 1:
+            errors.append(f"{path}: matches {match_count} oneOf branches, expected exactly 1")
+
     expected_type = schema.get("type")
-    if isinstance(expected_type, str) and not type_matches(value, expected_type):
+    if isinstance(expected_type, (str, list)) and not type_matches(value, expected_type):
         errors.append(f"{path}: expected {expected_type}, got {type(value).__name__}")
         return errors
 
@@ -66,18 +113,18 @@ def validate_schema(value: Any, schema: dict[str, Any], path: str = "$") -> list
         properties = schema.get("properties", {})
         for key, sub_schema in properties.items():
             if key in value and isinstance(sub_schema, dict):
-                errors.extend(validate_schema(value[key], sub_schema, f"{path}.{key}"))
+                errors.extend(validate_schema(value[key], sub_schema, f"{path}.{key}", root_schema))
         additional = schema.get("additionalProperties", True)
         if isinstance(additional, dict):
             for key, item in value.items():
                 if key not in properties:
-                    errors.extend(validate_schema(item, additional, f"{path}.{key}"))
+                    errors.extend(validate_schema(item, additional, f"{path}.{key}", root_schema))
 
     if isinstance(value, list):
         item_schema = schema.get("items")
         if isinstance(item_schema, dict):
             for idx, item in enumerate(value):
-                errors.extend(validate_schema(item, item_schema, f"{path}[{idx}]"))
+                errors.extend(validate_schema(item, item_schema, f"{path}[{idx}]", root_schema))
 
     return errors
 

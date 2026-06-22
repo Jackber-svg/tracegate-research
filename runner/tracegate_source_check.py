@@ -83,7 +83,7 @@ def run(project: Path) -> dict[str, Any]:
     registry_path = project / "PARAMETER_REGISTRY.json"
     source_path = project / "SOURCE_MANIFEST.json"
     if not registry_path.exists() and not source_path.exists():
-        checks.append(Check("PASS", "source_check_skipped", "SKIPPED_NOT_CONFIGURED: no PARAMETER_REGISTRY.json or SOURCE_MANIFEST.json"))
+        checks.append(Check("SKIPPED_NOT_CONFIGURED", "source_check_skipped", "no PARAMETER_REGISTRY.json or SOURCE_MANIFEST.json"))
         return make_report(project, "tracegate_source_check", checks)
     if not registry_path.is_file():
         checks.append(Check("BLOCK", "parameter_registry_missing", "SOURCE_MANIFEST exists but PARAMETER_REGISTRY.json is missing"))

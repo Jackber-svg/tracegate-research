@@ -20,63 +20,21 @@ failures that agents are most likely to hand-wave past.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
+
+RUNNER_DIR = Path(__file__).resolve().parent
+if str(RUNNER_DIR) not in sys.path:
+    sys.path.insert(0, str(RUNNER_DIR))
+
+from tracegate_common import Check, load_json, read_jsonl, rel, sha256_file, status_code
 
 
 VALID_MODES = {"DISCOVERY", "STAGING", "VALIDATION", "BASELINE"}
 VALID_PROFILES = {"lite", "full"}
-
-
-@dataclass
-class Check:
-    status: str
-    code: str
-    message: str
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
-    return "sha256:" + h.hexdigest()
-
-
-def load_json(path: Path) -> tuple[Any | None, str | None]:
-    try:
-        return json.loads(path.read_text(encoding="utf-8")), None
-    except Exception as exc:  # noqa: BLE001 - report any parse/read failure
-        return None, str(exc)
-
-
-def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
-    rows: list[dict[str, Any]] = []
-    errors: list[str] = []
-    if not path.exists():
-        return rows, [f"{path.name} does not exist"]
-    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        line = raw.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-            if not isinstance(obj, dict):
-                errors.append(f"line {line_no}: JSON value is not an object")
-            else:
-                rows.append(obj)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"line {line_no}: {exc}")
-    return rows, errors
-
-
-def rel(project: Path, maybe_path: str) -> Path:
-    p = Path(maybe_path)
-    return p if p.is_absolute() else project / p
 
 
 class Runner:
@@ -342,11 +300,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print_text(report)
 
-    if report["status"] == "BLOCK":
-        return 2
-    if report["status"] == "WARN":
-        return 1
-    return 0
+    return status_code(report["status"])
 
 
 if __name__ == "__main__":

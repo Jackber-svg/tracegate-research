@@ -1,0 +1,37 @@
+name: TraceGate CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile runners
+        run: python -m py_compile runner/*.py
+        shell: bash
+      - name: Validate skill
+        run: python - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path("SKILL.md").read_text(encoding="utf-8")
+          assert text.startswith("---\n")
+          frontmatter = text.split("---", 2)[1]
+          assert re.search(r"^name:\s*tracegate\s*$", frontmatter, re.M)
+          assert re.search(r"^description:\s*.+", frontmatter, re.M)
+          PY
+        shell: bash
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Check minimal project
+        run: python runner/tracegate_check.py examples/minimal_project

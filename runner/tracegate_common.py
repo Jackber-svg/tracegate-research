@@ -57,10 +57,15 @@ def rel(project: Path, maybe_path: str) -> Path:
 
 
 def overall_status(checks: list[Check]) -> str:
+    skip_statuses = {"SKIPPED_NOT_CONFIGURED", "SKIPPED_NOT_APPLICABLE"}
     if any(c.status == "BLOCK" for c in checks):
         return "BLOCK"
     if any(c.status == "WARN" for c in checks):
         return "WARN"
+    if checks and all(c.status in skip_statuses for c in checks):
+        if any(c.status == "SKIPPED_NOT_CONFIGURED" for c in checks):
+            return "SKIPPED_NOT_CONFIGURED"
+        return "SKIPPED_NOT_APPLICABLE"
     return "PASS"
 
 
@@ -87,7 +92,7 @@ def print_report(title: str, report: dict[str, Any]) -> None:
     print(f"Status: {report['status']}")
     print()
     for check in report["checks"]:
-        print(f"{check['status']:<5} {check['code']:<34} {check['message']}")
+        print(f"{check['status']:<24} {check['code']:<34} {check['message']}")
 
 
 def is_text_file(path: Path, sample_size: int = 4096) -> bool:

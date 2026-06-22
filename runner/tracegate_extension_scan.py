@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,44 @@ from tracegate_common import Check, is_text_file, load_json, make_report, print_
 
 
 DEFAULT_TARGETS = ["MODEL_STATE.json", "runtime_expression_dump.json", "src"]
+
+
+def parse_inline_list(value: str) -> list[str]:
+    raw = value.strip()
+    if not (raw.startswith("[") and raw.endswith("]")):
+        return []
+    body = raw[1:-1].strip()
+    if not body:
+        return []
+    return [part.strip().strip("'\"") for part in body.split(",") if part.strip()]
+
+
+def contract_runtime_artifacts(project: Path) -> list[str]:
+    path = project / "CONTRACT.yaml"
+    if not path.is_file():
+        return []
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    for idx, line in enumerate(lines):
+        match = re.match(r"^(\s*)runtime_artifacts\s*:\s*(.*)$", line)
+        if not match:
+            continue
+        base_indent = len(match.group(1))
+        inline = parse_inline_list(match.group(2))
+        if inline:
+            return inline
+        values: list[str] = []
+        for child in lines[idx + 1 :]:
+            child_indent = len(child) - len(child.lstrip(" "))
+            stripped = child.strip()
+            if not stripped:
+                continue
+            if child_indent <= base_indent:
+                break
+            item = re.match(r"^-\s*(.+)$", stripped)
+            if item:
+                values.append(item.group(1).strip().strip("'\""))
+        return values
+    return []
 
 
 def iter_text_files(project: Path, target: str) -> tuple[list[Path], list[str]]:
@@ -55,13 +94,13 @@ def run(project: Path) -> dict[str, Any]:
     checks: list[Check] = []
     manifest_path = project / "EXTENSION_KEYWORD_MANIFEST.json"
     if not manifest_path.exists():
-        checks.append(Check("PASS", "extension_scan_skipped", "SKIPPED_NOT_CONFIGURED: EXTENSION_KEYWORD_MANIFEST.json is absent"))
+        checks.append(Check("SKIPPED_NOT_CONFIGURED", "extension_scan_skipped", "EXTENSION_KEYWORD_MANIFEST.json is absent"))
         return make_report(project, "tracegate_extension_scan", checks)
     manifest, err = load_json(manifest_path)
     if err or not isinstance(manifest, dict):
         checks.append(Check("BLOCK", "extension_manifest_parse_error", f"EXTENSION_KEYWORD_MANIFEST.json parse failed: {err}"))
         return make_report(project, "tracegate_extension_scan", checks)
-    targets = manifest.get("scan_targets", DEFAULT_TARGETS)
+    targets = contract_runtime_artifacts(project) or manifest.get("runtime_artifacts") or manifest.get("scan_targets", DEFAULT_TARGETS)
     if not isinstance(targets, list):
         targets = DEFAULT_TARGETS
     files: list[Path] = []
@@ -83,7 +122,7 @@ def run(project: Path) -> dict[str, Any]:
         extension_id = str(extension.get("extension_id") or "<missing-id>")
         switch_value = extension.get("expected_switch_value")
         if switch_value is not False:
-            checks.append(Check("PASS", "extension_scan_not_core", f"{extension_id}: expected_switch_value is not false; scan not enforced"))
+            checks.append(Check("SKIPPED_NOT_APPLICABLE", "extension_scan_not_core", f"{extension_id}: expected_switch_value is not false; scan not enforced"))
             continue
         forbidden_tokens = [str(t) for t in extension.get("forbidden_tokens", []) if str(t)]
         allowed_contexts = [str(c) for c in extension.get("allowed_contexts", []) if str(c)]

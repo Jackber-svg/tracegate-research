@@ -78,7 +78,7 @@ def run(project: Path) -> dict[str, Any]:
     manifest_path = project / "EQUATION_MANIFEST.json"
     runtime_path = project / "runtime_expression_dump.json"
     if not manifest_path.exists():
-        checks.append(Check("PASS", "equation_check_skipped", "SKIPPED_NOT_CONFIGURED: EQUATION_MANIFEST.json is absent"))
+        checks.append(Check("SKIPPED_NOT_CONFIGURED", "equation_check_skipped", "EQUATION_MANIFEST.json is absent"))
         return make_report(project, "tracegate_equation_check", checks)
     if not runtime_path.is_file():
         checks.append(Check("BLOCK", "runtime_expression_dump_missing", "EQUATION_MANIFEST exists but runtime_expression_dump.json is missing"))
