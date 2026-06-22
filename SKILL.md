@@ -36,6 +36,12 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 6. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
 7. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
 8. For baseline promotion, use `python runner/tracegate_promote.py <project_dir>` only after checks pass and zero open decisions remain.
+9. Use optional focused runners when corresponding files exist:
+   - `tracegate_schema_check.py` for core schema validation.
+   - `tracegate_decision_audit.py` for decision approvals and STATE sync.
+   - `tracegate_source_check.py` for parameter/source consistency.
+   - `tracegate_equation_check.py` for equation-form closure.
+   - `tracegate_extension_scan.py` for residual extension tokens.
 
 ## Fail-Closed Conditions
 
@@ -49,6 +55,7 @@ Stop and report `BLOCK` when:
 - A source value, encoded value, unit conversion, or implementation value cannot be reconciled.
 - An extension is disabled but active runtime artifacts still contain forbidden tokens.
 - KPI/domain metrics pass but `equation_form_gate` fails.
+- `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, or `tracegate_extension_scan.py` returns `BLOCK`.
 - External audit has unresolved `BLOCK` or `CRITICAL` findings.
 
 ## Output Style

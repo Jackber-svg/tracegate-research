@@ -62,6 +62,11 @@ runner/tracegate_check.py       Check required files, hashes, manifest closure, 
 runner/tracegate_init.py        Create a minimal TraceGate project skeleton.
 runner/tracegate_fix_hashes.py  Refresh declared hashes after an intentional file update.
 runner/tracegate_promote.py     Promote a passing project state to BASELINE.
+runner/tracegate_schema_check.py    Validate core file schemas.
+runner/tracegate_decision_audit.py  Audit decision status, approvals, and STATE sync.
+runner/tracegate_source_check.py    Check parameter/source manifest consistency.
+runner/tracegate_equation_check.py  Check declared equation form against runtime expression dumps.
+runner/tracegate_extension_scan.py  Scan for forbidden residual extension tokens.
 ```
 
 The runners are intentionally conservative. They do not prove scientific correctness or execute domain-specific gates. They verify the basic file-grounded closure that an agent must not hand-wave: required files, contract hashes, artifact manifest hash, manifest-listed artifact hashes, decision log parsing, open decisions, current artifact hash, and last checkpoint report.
@@ -73,6 +78,11 @@ python runner/tracegate_init.py path/to/project --project my_project
 python runner/tracegate_check.py path/to/project
 python runner/tracegate_fix_hashes.py path/to/project
 python runner/tracegate_promote.py path/to/project
+python runner/tracegate_schema_check.py path/to/project
+python runner/tracegate_decision_audit.py path/to/project
+python runner/tracegate_source_check.py path/to/project
+python runner/tracegate_equation_check.py path/to/project
+python runner/tracegate_extension_scan.py path/to/project
 ```
 
 ## Use with Other Agents
@@ -94,7 +104,7 @@ AGENTS.md                Universal agent entry
 CLAUDE.md                Claude Code style entry
 references/protocol.md   Full TraceGate Research protocol
 agents/openai.yaml       Codex UI metadata
-runner/                  Minimal state/hash/manifest runners
+runner/                  Minimal state/hash/manifest/source/equation runners
 schemas/                 JSON schemas for core TraceGate files
 examples/minimal_project Minimal passing project fixture
 ```

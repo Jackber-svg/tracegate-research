@@ -641,6 +641,11 @@ runner/
   tracegate_init.py
   tracegate_fix_hashes.py
   tracegate_promote.py
+  tracegate_schema_check.py
+  tracegate_decision_audit.py
+  tracegate_source_check.py
+  tracegate_equation_check.py
+  tracegate_extension_scan.py
   gate_runner.py
   hash_manifest.py
   source_lock.py
