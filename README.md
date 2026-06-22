@@ -25,13 +25,13 @@ Use this repository as a Codex skill. The repository root contains `SKILL.md`, s
 Manual local install:
 
 ```powershell
-git clone https://github.com/Jackber-svg/tracegate-skill.git "$env:USERPROFILE\.codex\skills\tracegate"
+git clone https://github.com/Jackber-svg/tracegate-research.git "$env:USERPROFILE\.codex\skills\tracegate"
 ```
 
 On macOS or Linux:
 
 ```bash
-git clone https://github.com/Jackber-svg/tracegate-skill.git ~/.codex/skills/tracegate
+git clone https://github.com/Jackber-svg/tracegate-research.git ~/.codex/skills/tracegate
 ```
 
 Then start a new Codex session and ask:
