@@ -1,91 +1,193 @@
 # Literature Extraction Subskill
 
 Use this TraceGate subworkflow when a research project needs to audit whether
-values in a parameter registry are actually supported by the cited source
-documents. The goal is not to make a parameter set look complete. The goal is to
-separate direct source values, converted values, digitized approximations,
-derived values, inferred values, and missing values before any baseline claim is
-allowed.
+values in a parameter registry are actually supported by local source evidence.
+It is designed for source-derived parameter work, especially when a registry
+was built from PDFs, extracted text, tables, figures, supplementary files,
+webpages, digitization outputs, or manual literature notes.
 
-## Scope
+The core failure this subskill prevents is:
+
+```text
+The registry is internally consistent, but the value in the registry is not
+what the cited source actually says.
+```
+
+The goal is not to make a parameter set look complete. The goal is to separate
+direct source values, converted values, digitized approximations, derived
+values, inferred values, conflicts, and missing values before any baseline
+claim is allowed.
+
+## Inputs and Outputs
 
 Inputs:
 
 ```text
 MECHANICAL_PARAMETER_REGISTRY.json or PARAMETER_REGISTRY.json
-source_evidence/ containing downloaded PDFs, extracted text, webpages, tables,
-figures, supplementary files, and digitization artifacts
+source_evidence/ containing downloaded PDFs, extracted text, webpages,
+supplementary files, figure digitization files, tables, and notes
 ```
 
-Output:
+Outputs:
 
 ```text
 audit_report.json
+audit_report.md
+proposed_fixes.json
 ```
 
-The audit is read-only by default:
+`audit_report.json` is the machine-readable result. `audit_report.md` is the
+human-readable explanation. `proposed_fixes.json` contains suggested registry
+changes but must not be applied automatically.
+
+## Hard Constraints
 
 ```text
-Do not edit the registry.
 Do not connect to the web.
-Do not run solvers.
-Do not promote baseline.
-Do not rewrite source_status to a stronger class unless the source evidence
+Do not edit source files.
+Do not edit registry files.
+Do not run COMSOL or other solvers.
+Do not use chat memory or model common sense as evidence.
+All judgments must point to local source_evidence files.
+If the source is unreadable, missing pages, OCR-damaged, or lacks a locator,
+mark the parameter BLOCK or SOURCE_UNVERIFIED.
+Do not rewrite source_status to a stronger class unless local source evidence
 directly supports it.
 ```
 
-If the user explicitly asks for fixes, write proposed patches separately from
-the audit report and mark them as suggestions.
+If the user explicitly asks for fixes, output proposed patches separately. Use
+`proposed_fixes` or `safe_patch_suggestions`; do not claim that fixes were
+applied, because the default workflow is read-only.
 
 ## Required Audit Rounds
 
-Run rounds in order. Later consistency checks cannot rescue a failed source
-value check.
+Run all seven rounds in order:
 
-### R0 Original Value Check
+```text
+R-1 Evidence file inventory
+R0  Original value check
+R1  Provenance completeness
+R2  Evidence grade check
+R3  Duplicate, lineage, and conflict check
+R4  Physical consistency check
+R5  Baseline admission check
+```
 
-Check whether each registry value is actually present in the cited source.
+Later consistency checks cannot rescue a failed R-1 or R0 check.
 
-For each parameter:
+## R-1 Evidence File Inventory
 
-1. Locate the cited source artifact under `source_evidence/`.
-2. Locate the exact evidence anchor:
-   - table cell
-   - figure and digitized curve/point
-   - equation
-   - caption
-   - supplementary table
-   - body-text line
-   - extracted-text line number
-3. Compare the registry value against the source value.
+Before checking any parameter, inventory the evidence directory.
+
+For every file under `source_evidence/`, record:
+
+```text
+path
+sha256 hash
+file type: PDF | txt | webpage | supplement | table | figure | digitization | note | unknown
+readability: readable | unreadable | OCR_damaged | binary_only | missing
+source_id or paper_id if inferable
+page coverage if known
+last modified time
+```
 
 Rules:
 
 ```text
-Exact table/text match:
-  PASS if numeric value, unit, material, condition, and direction match.
+If the registry cites a source_id with no corresponding local evidence file,
+BLOCK that parameter.
+
+If the only source file is unreadable, OCR-damaged around the value, or missing
+the cited page/table/figure, mark SOURCE_UNVERIFIED or BLOCK.
+
+If a PDF exists but no extracted text/table/figure artifact exists, the auditor
+may still inspect the PDF if tooling is available, but must record that the
+source was read from PDF rather than extracted text.
+
+If a webpage is used, record whether it is a saved local page, text export,
+markdown copy, or screenshot. Do not fetch it again from the internet.
+```
+
+R-1 output must include:
+
+```json
+{
+  "evidence_inventory": [
+    {
+      "path": "source_evidence/paper.txt",
+      "sha256": "sha256:...",
+      "type": "txt",
+      "readability": "readable",
+      "source_id_candidates": ["SRC-001"],
+      "notes": []
+    }
+  ],
+  "registry_sources_without_files": [],
+  "unreadable_or_damaged_sources": []
+}
+```
+
+## R0 Original Value Check
+
+Check whether each registry value is actually present in the cited source.
+
+For every parameter, output:
+
+```text
+registry_parameter
+registry_value
+registry_unit
+source_file
+source_locator: page/table/row/column/figure/panel/curve/equation/line/supplement
+paper_value
+paper_unit
+quoted_excerpt
+match_type: EXACT | CONVERTED | DIGITIZED | DERIVED | INFERRED | NOT_FOUND | MISMATCH
+conversion_formula if any
+uncertainty if digitized or estimated
+search_evidence if not found
+status: PASS | WARN | BLOCK
+```
+
+Keep `quoted_excerpt` short. Prefer no more than one sentence or 25 words from
+the source.
+
+Evidence rules:
+
+```text
+Table:
+  Verify the exact cell, row label, column label, units, and table caption.
+
+Figure:
+  Mark DIGITIZED or DIGITIZED_APPROXIMATE.
+  Never mark SOURCE_DIRECT.
+  Require digitization artifact, axis calibration, and uncertainty.
+
+Body text:
+  Provide page or extracted-text line number and short excerpt.
+
+Equation:
+  Provide equation number, formula, source inputs, and derivation steps.
+
+Supplementary:
+  Mark SUPPLEMENTARY or identify the supplement in source_anchor.
 
 Converted value:
-  PASS only if original value, conversion formula, conversion factor, target
-  unit, and assumptions are recorded.
-
-Figure value:
-  Mark DIGITIZED_APPROXIMATE or FIGURE_DIGITIZED.
-  Never mark SOURCE_DIRECT.
-  Require digitization artifact and uncertainty estimate.
+  Verify original value, conversion formula, conversion factor, target unit,
+  assumptions, and intermediate numeric steps.
 
 Derived value:
   Mark DERIVED.
-  Record formula and all input source anchors.
+  Record formula and every source input anchor.
 
 Inferred value:
   Mark INFERRED.
-  Require rationale and block baseline unless accepted by decision.
+  Require rationale and block baseline unless an accepted decision allows it.
 
 Value not found:
-  BLOCK.
+  BLOCK and include search evidence.
 
-Registry value differs from source:
+Value mismatch:
   BLOCK and report the source value.
 ```
 
@@ -95,22 +197,17 @@ Example conversion:
 paper: 13.7% area expansion
 registry: 6.6% diameter expansion
 check: sqrt(1 + 0.137) - 1 = 0.0663
-classification: converted_match, not direct_match
+match_type: CONVERTED
 ```
 
-R0 output lists:
+Search evidence is mandatory for `NOT_FOUND`. Record:
 
-```json
-{
-  "exact_match_list": [],
-  "converted_match_list": [],
-  "digitized_approximate_list": [],
-  "derived_from_formula_list": [],
-  "inferred_not_measured_list": [],
-  "supplementary_source_list": [],
-  "value_not_found_in_paper_list": [],
-  "value_mismatch_list": []
-}
+```text
+keywords searched
+files searched
+pages, tables, figures, or line ranges inspected
+nearby candidate values found
+why candidates were rejected
 ```
 
 Automatic source-status rules:
@@ -123,48 +220,63 @@ source value only in figure              -> source_status must include FIGURE_DI
 source does not contain the value        -> SOURCE_MISSING or remove parameter from baseline set
 ```
 
-### R1 Provenance Check
+## R1 Provenance Completeness
 
-Check whether the source identity and anchor are sufficient.
+Check whether the source identity and locator are sufficient.
 
 For each parameter, verify:
 
 ```text
 paper_id exists
+source_id exists
 DOI or stable source identifier exists when available
-source file exists under source_evidence/
+local source file exists under source_evidence/
 source file hash or manifest artifact id exists when available
-locator is specific enough: table/figure/equation/page/line/caption/supplement
-material name is not generic when the registry needs a specific system
-measurement condition is recorded when the value depends on condition
+locator is specific: page/table/figure/equation/line/caption/supplement
+material name is specific enough for the registry claim
+measurement condition is recorded when condition-dependent
 ```
 
 BLOCK if a baseline parameter lacks a usable source anchor.
 
 WARN if the source is real but the anchor is too coarse, such as only a paper
-title without table, figure, or line locator.
+title without page, table, figure, equation, or line locator.
 
-### R2 Evidence Grade Check
+## R2 Evidence Grade Check
 
 Check whether `evidence_grade` is inflated.
 
-Downgrade or flag when:
+Expected strength ordering:
+
+```text
+direct same-system measured
+  > same-system derived
+  > same-system digitized
+  > close-system measured
+  > cross-system transferred
+  > inferred
+  > proxy
+```
+
+Flag or downgrade when:
 
 ```text
 A/B grade assigned to a different material system
 A/B grade assigned to digitized figure-only data
-A/B grade assigned to derived or inferred values
-C grade assigned without explaining cross-system transfer
-D grade used but baseline_allowed is true without decision/sweep rationale
+A/B grade assigned to derived, inferred, fitted, or assumed values
+C grade assigned without cross-system transfer rationale
+D grade used with baseline_allowed=true and no decision/sweep rationale
+figure digitized value graded above D without accepted decision and QA artifact
+secondary-source repeat counted as independent evidence
 ```
 
 Do not let a clean-looking registry table hide weak evidence.
 
-### R3 Duplicate and Lineage Check
+## R3 Duplicate, Lineage, and Conflict Check
 
-Detect repeated values that appear to come from the same original source.
+Detect repeated values, secondary-source reuse, and contradictory source values.
 
-Check:
+Duplicate and lineage checks:
 
 ```text
 different paper_id but same numeric value, unit, and wording
@@ -174,12 +286,48 @@ same value copied into multiple parameters under different names
 same parameter listed once as measured and once as inferred
 ```
 
-If duplicates are found, mark the primary source and secondary source lineage.
-Do not count duplicated values as independent evidence.
+Conflict checks:
 
-### R4 Physical Consistency Check
+```text
+multiple sources report different values for the same parameter
+same source reports different values under different conditions
+registry uses one value from a range without selection policy
+main text and supplementary disagree
+figure-derived value disagrees with table/text value
+```
+
+For every conflict, output:
+
+```json
+{
+  "conflict_set": ["SRC-001", "SRC-002"],
+  "parameter": "E_L",
+  "values": [
+    {"source_id": "SRC-001", "value": 120.0, "unit": "GPa", "condition": "dry"},
+    {"source_id": "SRC-002", "value": 80.0, "unit": "GPa", "condition": "wet"}
+  ],
+  "likely_reason": "different material condition",
+  "recommended_status": "SOURCE_CONFLICT",
+  "baseline_allowed": false,
+  "required_decision": "parameter_acceptance or source_conflict_resolution"
+}
+```
+
+Policy:
+
+```text
+Conflicting values cannot enter baseline unless an accepted decision selects
+one value, explains why, and records the excluded alternatives.
+
+Duplicate secondary-source values do not count as independent support.
+```
+
+## R4 Physical Consistency Check
 
 Check minimum physical coherence after source extraction.
+
+This round cannot turn missing evidence into valid evidence. It only checks
+whether already extracted values can coexist physically.
 
 Examples:
 
@@ -194,20 +342,35 @@ swelling/expansion:
   sign convention, area-to-diameter conversion, linear-to-volumetric conversion
 
 anisotropy:
-  longitudinal vs transverse values not swapped
+  longitudinal vs transverse vs radial vs axial values not swapped
 
-units and dimensions:
-  Pa vs GPa, cm2/s vs m2/s, percent vs fraction, mol/m3 vs mol/L
+unit dimensions:
+  Pa vs MPa vs GPa
+  cm2/s vs m2/s
+  percent vs fraction
+  wt% vs vol% vs mol%
+  mol/m3 vs mol/L
+  area strain vs diameter strain vs volumetric strain
+
+axis multipliers:
+  log axis
+  x10^-12 style axis multiplier
+  normalized axes
+  per mass vs per area vs per volume vs per active material vs per composite
 
 condition dependence:
-  temperature, SOC, strain rate, electrolyte formulation, sample direction,
-  loading mode, dry/wet condition, particle/fiber/composite scale
+  temperature
+  SOC, concentration, lithiation level, strain state
+  strain rate
+  electrolyte formulation
+  dry/wet/electrolyte-swollen state
+  loading mode
+  sample direction
+  particle/fiber/composite scale
+  measured vs fitted vs assumed
 ```
 
-R4 cannot turn a missing source into a valid source. It only checks whether
-already extracted values can coexist physically.
-
-### R5 Baseline Admission Check
+## R5 Baseline Admission Check
 
 Decide whether the parameter may enter the declared baseline.
 
@@ -215,7 +378,8 @@ Default policy:
 
 ```text
 A/B evidence:
-  allowed if source status is complete and implementation binding exists.
+  allowed if source status is complete, source locator is precise, material and
+  condition match, and implementation binding exists.
 
 C evidence:
   allowed only with rationale and sensitivity/sweep or accepted decision.
@@ -228,12 +392,18 @@ SOURCE_INCOMPLETE:
   requires source_decision_id and allowed_claim_level.
 
 FIGURE_DIGITIZED:
-  requires digitization artifact, uncertainty, and independent QA.
+  requires digitization artifact, uncertainty, axis calibration, and independent QA.
+
+DERIVED:
+  requires formula, inputs, conversion steps, and assumptions.
 
 INFERRED:
-  requires formula, assumptions, and accepted decision before baseline.
+  requires rationale and accepted decision before baseline.
 
-SOURCE_MISSING or SOURCE_REJECTED:
+SOURCE_CONFLICT:
+  baseline_allowed=false unless a conflict-resolution decision is accepted.
+
+SOURCE_MISSING, SOURCE_UNVERIFIED, or SOURCE_REJECTED:
   blocked.
 ```
 
@@ -245,7 +415,7 @@ Run these checks when the source type makes them relevant.
 
 ```text
 Check source version: main article, supplementary information, correction,
-erratum, preprint, accepted manuscript, or publisher version.
+erratum, preprint, accepted manuscript, publisher version, or local copy.
 Record if a value comes from supplement rather than main text.
 Record if extracted text has OCR problems around the value.
 Record whether the source is primary research, review, datasheet, or model paper.
@@ -256,13 +426,13 @@ Record whether the source is primary research, review, datasheet, or model paper
 ```text
 Every accepted value needs the smallest available locator:
 table row/column, figure panel and curve label, equation number, page, line,
-caption, or supplementary file name.
+caption, supplementary file name, or digitization artifact path.
 ```
 
 ### Unit and Axis Multipliers
 
 ```text
-Check axis multipliers such as x10^-12, %, kPa, GPa, cm2/s, mAh/g.
+Check axis multipliers such as x10^-12, %, kPa, MPa, GPa, cm2/s, mAh/g.
 Check normalized axes and convert to absolute values only with recorded scale.
 Check whether a value is per mass, per area, per volume, per composite, per
 fiber, per active material, or per total electrode.
@@ -291,7 +461,7 @@ Check whether negative values are physical or convention-driven.
 ```text
 Check material composition, grade, fiber type, electrolyte formulation, porosity,
 volume fraction, particle size, temperature, SOC/lithiation level, humidity,
-strain rate, cycling state, and test method.
+strain rate, cycling state, test method, and sample preparation.
 ```
 
 ### Derived-Value Trace
@@ -323,47 +493,53 @@ The report must be JSON and must include all rounds.
   "status": "PASS | WARN | BLOCK",
   "input_registry": "PARAMETER_REGISTRY.json",
   "source_evidence_root": "source_evidence/",
+  "outputs": {
+    "json_report": "audit_report.json",
+    "markdown_report": "audit_report.md",
+    "proposed_fixes": "proposed_fixes.json"
+  },
   "rounds": {
+    "R-1_evidence_file_inventory": {
+      "status": "PASS | WARN | BLOCK",
+      "issues_list": [],
+      "proposed_fixes": []
+    },
     "R0_original_value_check": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     },
-    "R1_provenance_check": {
+    "R1_provenance_completeness": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     },
     "R2_evidence_grade_check": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     },
-    "R3_duplicate_lineage_check": {
+    "R3_duplicate_lineage_conflict_check": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     },
     "R4_physical_consistency_check": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     },
     "R5_baseline_admission_check": {
       "status": "PASS | WARN | BLOCK",
       "issues_list": [],
-      "auto_fixes_applied": []
+      "proposed_fixes": []
     }
   },
   "blocking_findings": [],
   "warn_findings": [],
+  "conflict_sets": [],
   "recommended_registry_changes": [],
-  "tracegate_outputs_to_create": [
-    "SOURCE_MANIFEST.json",
-    "PARAMETER_REGISTRY.json",
-    "DECISIONS.jsonl entries for SOURCE_INCOMPLETE items",
-    "GATE_REPORTS/literature_extraction_audit.json"
-  ]
+  "do_not_apply": true
 }
 ```
 
@@ -377,7 +553,15 @@ Issue objects should include:
   "finding": "registry value not found in cited source",
   "registry_value": {"value": 1.0, "unit": "GPa"},
   "source_value": null,
-  "source_anchor": "source_evidence/paper.txt:123",
+  "source_file": "source_evidence/paper.txt",
+  "source_locator": "line 123",
+  "quoted_excerpt": "short source excerpt",
+  "search_evidence": {
+    "keywords_searched": ["E_L", "longitudinal modulus"],
+    "files_searched": ["source_evidence/paper.txt"],
+    "locations_checked": ["Table 1", "lines 100-180"],
+    "candidate_values_rejected": []
+  },
   "recommended_action": "mark SOURCE_MISSING or remove from baseline"
 }
 ```
@@ -391,27 +575,34 @@ Use TraceGate literature extraction.
 
 Inputs:
 - MECHANICAL_PARAMETER_REGISTRY.json or PARAMETER_REGISTRY.json
-- source_evidence/ with downloaded PDF/txt/webpage/table/figure evidence
+- source_evidence/ with downloaded PDF/txt/webpage/supplement/table/figure/digitization evidence
 
-Output:
-- audit_report.json with R0-R5 findings
+Outputs:
+- audit_report.json
+- audit_report.md
+- proposed_fixes.json
+
+Constraints:
+- Do not connect to the web.
+- Do not modify any source or registry file.
+- Do not run COMSOL or other solvers.
+- Do not use chat memory or model common sense as evidence.
+- All judgments must point to local source_evidence files.
+- If original evidence is unreadable, missing, OCR-damaged, or lacks locator, mark BLOCK or SOURCE_UNVERIFIED.
 
 Audit rounds:
-R0 Original value check: verify registry values against original source numbers.
-R1 Provenance check: verify DOI/source identity, material specificity, and locator precision.
-R2 Evidence grade check: detect inflated evidence grades.
-R3 Duplicate and lineage check: detect reused values and secondary-source duplication.
-R4 Physical consistency check: check units, signs, directions, ROM/Poisson/swelling coherence.
+R-1 Evidence file inventory: list source_evidence files, hashes, types, readability, and missing registry sources.
+R0 Original value check: verify registry values against original source numbers, with source locator and short excerpt.
+R1 Provenance completeness: verify DOI/source identity, material specificity, condition, and locator precision.
+R2 Evidence grade check: detect inflated grades; direct same-system measured > derived > digitized > inferred > proxy.
+R3 Duplicate, lineage, and conflict check: detect repeated secondary values and conflicting source values.
+R4 Physical consistency check: check units, dimensions, signs, directions, conditions, and physical coherence.
 R5 Baseline admission check: decide whether each parameter can enter baseline.
 
 Rules:
-- Do not connect to the web.
-- Do not modify registry files.
-- Do not run solvers.
-- Do not promote baseline.
 - Figures are DIGITIZED_APPROXIMATE, never SOURCE_DIRECT.
 - Derived or inferred values must be labeled as such.
-- Values not found in the paper are BLOCK.
-- Every round must output status, issues_list, and auto_fixes_applied.
+- Values not found in the source are BLOCK and must include search evidence.
+- Conflicting values require conflict_set, likely_reason, recommended_status, and baseline_allowed=false unless an accepted decision exists.
+- Every round must output status, issues_list, and proposed_fixes.
 ```
-

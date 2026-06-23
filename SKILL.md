@@ -43,7 +43,7 @@ For literature-derived parameter extraction or source-evidence audits, also read
 4. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
 5. After an intentional file edit, use `python runner/tracegate_fix_hashes.py <project_dir>` to refresh declared hashes, then rerun `tracegate_check.py`.
 6. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
-   - For literature extraction from PDFs, text, webpages, tables, figures, or supplementary files, use `references/literature_extraction.md` and run the R0-R5 audit before strengthening any `source_status`.
+   - For literature extraction from PDFs, text, webpages, tables, figures, or supplementary files, use `references/literature_extraction.md` and run the R-1 to R5 audit before strengthening any `source_status`.
 7. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
 8. For baseline promotion, use `python runner/tracegate_promote.py <project_dir>` only after checks pass and zero open decisions remain.
 9. Use optional focused runners when corresponding files exist:

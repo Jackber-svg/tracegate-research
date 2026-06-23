@@ -24,7 +24,7 @@ At minimum, inspect these sections:
 - Checkpoint Rule
 - Release Readiness Checklist
 
-For literature extraction, run the R0-R5 workflow before strengthening any registry `source_status` or treating a parameter as source-supported.
+For literature extraction, run the R-1 to R5 workflow before strengthening any registry `source_status` or treating a parameter as source-supported.
 
 ## Operating Rule
 
