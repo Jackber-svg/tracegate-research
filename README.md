@@ -2,6 +2,8 @@
 
 TraceGate Research is a runner-backed governance protocol for long-running research-agent workflows. It keeps hypotheses, constraints, source evidence, decisions, artifacts, and checkpoints in versioned files rather than chat memory, so a new agent can recover project state from the repository alone.
 
+Requires only Python 3.11+. No dependencies.
+
 The protocol addresses a recurring failure mode in agent-assisted research: as context grows, early constraints become diluted, missing evidence is replaced by plausible proxies, and partial outputs are promoted as verified. This risk is acute in computational modelling, simulation, literature-derived parameterization, and research-code generation, where a coherent answer can be less useful than a principled stop.
 
 TraceGate treats the workflow as an auditable state machine. Contracts define acceptable evidence, manifests bind artifacts to hashes, decision logs record exceptions, and gate reports control continuation. Dependency-free runners check state closure, schemas, decisions, source locks, equation forms, extension residues, and baseline promotion.
