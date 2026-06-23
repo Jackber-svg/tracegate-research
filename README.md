@@ -89,6 +89,16 @@ python runner/tracegate_equation_check.py path/to/project
 python runner/tracegate_extension_scan.py path/to/project
 ```
 
+## Scope and Limitations
+
+TraceGate Research is a file-grounded governance layer for research workflows. It is not a solver, sandbox, security boundary, distributed scheduler, or replacement for institutional review.
+
+The runners validate declared research state: required files, schemas, hashes, manifests, decisions, source locks, equation forms, extension residues, and checkpoint promotion. They do not guarantee that a scientific result is true, that a model is physically valid, or that a domain-specific gate is sufficient.
+
+TraceGate does not intercept arbitrary shell commands, enforce CPU or memory limits, encrypt or cryptographically sign local logs, protect raw experimental data from deletion, or coordinate multi-machine execution. Use operating-system permissions, containers, CI policy, backups, external review, and domain-specific validation for those layers.
+
+Project owners remain responsible for writing the scientific gates that matter for their field. TraceGate makes those gates harder to skip and easier to audit.
+
 ## Use with Other Agents
 
 Agents that do not support Codex skills can still use TraceGate Research by reading:
