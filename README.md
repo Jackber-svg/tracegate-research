@@ -8,7 +8,7 @@ The protocol addresses a recurring failure mode in agent-assisted research: as c
 
 TraceGate treats the workflow as an auditable state machine. Contracts define acceptable evidence, manifests bind artifacts to hashes, decision logs record exceptions, and gate reports control continuation. Dependency-free runners check state closure, schemas, decisions, source locks, equation forms, extension residues, and baseline promotion.
 
-The runner layer automates the routine checks that agents most often skip. It can initialize a minimal project, verify hashes and manifests, repair declared hash chains after intentional edits, audit decisions, compare registered parameters against source manifests, detect equation-form drift, scan disabled extensions for residual tokens, and promote only passing states to `BASELINE`.
+The runner layer automates the routine checks that agents most often skip. It can initialize a minimal project, verify hashes and manifests, repair declared hash chains after intentional edits, audit decisions, compare registered parameters against source manifests, detect equation-form drift, scan disabled extensions for residual tokens, evaluate configured numeric KPI thresholds, and promote only passing states to `BASELINE`.
 
 TraceGate is fail-closed by default. It does not prove that a result is true, but makes unsupported continuation visible and mechanically harder. The current release includes schemas, a passing fixture, regression tests, GitHub Actions CI, and line-ending controls that keep cloned fixtures hash-stable across platforms.
 
@@ -87,9 +87,10 @@ runner/tracegate_decision_audit.py  Audit decision status, approvals, and STATE 
 runner/tracegate_source_check.py    Check parameter/source manifest consistency.
 runner/tracegate_equation_check.py  Check declared equation form against runtime expression dumps.
 runner/tracegate_extension_scan.py  Scan for forbidden residual extension tokens.
+runner/tracegate_kpi_check.py       Check configured numeric KPI thresholds from PHYSICAL_KPI_GATES.json.
 ```
 
-The runners are intentionally conservative. They do not prove scientific correctness or execute domain-specific gates. They verify the basic file-grounded closure that an agent must not hand-wave: required files, contract hashes, artifact manifest hash, manifest-listed artifact hashes, decision log parsing, open decisions, current artifact hash, and last checkpoint report.
+The runners are intentionally conservative. The core runner does not execute domain-specific gates. Focused runners can check declared source locks, equation forms, extension residues, and generic numeric KPI thresholds, but they still do not prove scientific correctness. Project owners remain responsible for choosing scientifically meaningful KPIs and thresholds.
 
 Typical workflow:
 
@@ -103,13 +104,14 @@ python runner/tracegate_decision_audit.py path/to/project
 python runner/tracegate_source_check.py path/to/project
 python runner/tracegate_equation_check.py path/to/project
 python runner/tracegate_extension_scan.py path/to/project
+python runner/tracegate_kpi_check.py path/to/project
 ```
 
 ## Scope and Limitations
 
 TraceGate Research is a file-grounded governance layer for research workflows. It is not a solver, sandbox, security boundary, distributed scheduler, or replacement for institutional review.
 
-The runners validate declared research state: required files, schemas, hashes, manifests, decisions, source locks, equation forms, extension residues, and checkpoint promotion. They do not guarantee that a scientific result is true, that a model is physically valid, or that a domain-specific gate is sufficient.
+The runners validate declared research state: required files, schemas, hashes, manifests, decisions, source locks, equation forms, extension residues, generic KPI thresholds, and checkpoint promotion. They do not guarantee that a scientific result is true, that a model is physically valid, or that a domain-specific gate is sufficient.
 
 TraceGate does not intercept arbitrary shell commands, enforce CPU or memory limits, encrypt or cryptographically sign local logs, protect raw experimental data from deletion, or coordinate multi-machine execution. Use operating-system permissions, containers, CI policy, backups, external review, and domain-specific validation for those layers.
 
@@ -134,7 +136,7 @@ AGENTS.md                Universal agent entry
 CLAUDE.md                Claude Code style entry
 references/protocol.md   Full TraceGate Research protocol
 agents/openai.yaml       Codex UI metadata
-runner/                  Minimal state/hash/manifest/source/equation runners
+runner/                  Minimal state/hash/manifest/source/equation/KPI runners
 schemas/                 JSON schemas for core TraceGate files
 examples/minimal_project Minimal passing project fixture
 ```

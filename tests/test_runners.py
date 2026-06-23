@@ -231,6 +231,114 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("LEGACY_GATE_BINDINGS.json matches bundled schema", messages)
         self.assertIn("TASK_CONTRACT.yaml has minimal required task-boundary fields", messages)
 
+    def test_core_check_does_not_execute_kpi_gates(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "GATE_REPORTS" / "diagnostic_physical.json",
+            {
+                "full_window": True,
+                "metrics": {"max_abs_current_residual": 0.2},
+            },
+        )
+        write_json(
+            root / "PHYSICAL_KPI_GATES.json",
+            {
+                "version": "1.0",
+                "gates": [
+                    {
+                        "gate_id": "KPI001",
+                        "input_file": "GATE_REPORTS/diagnostic_physical.json",
+                        "requires_full_window": True,
+                        "thresholds": [
+                            {
+                                "metric": "max_abs_current_residual",
+                                "source": "metrics",
+                                "op": "lt",
+                                "value": 0.01,
+                                "fail_status": "BLOCK_CURRENT_RESIDUAL_GT_0P01",
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_check.py", root)
+        self.assertEqual((code, report["status"]), (0, "PASS"))
+
+    def test_kpi_check_blocks_failed_metrics(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "GATE_REPORTS" / "diagnostic_physical.json",
+            {
+                "window": {"coverage": "full"},
+                "metrics": {"max_abs_current_residual": 0.2},
+                "summary_rows": [{"metric": "cLi_CF_min_series", "value": "1.0"}],
+            },
+        )
+        write_json(
+            root / "PHYSICAL_KPI_GATES.json",
+            {
+                "version": "1.0",
+                "gates": [
+                    {
+                        "gate_id": "KPI001",
+                        "input_file": "GATE_REPORTS/diagnostic_physical.json",
+                        "allowed_modes": ["STAGING"],
+                        "requires_full_window": True,
+                        "thresholds": [
+                            {
+                                "metric": "max_abs_current_residual",
+                                "source": "metrics",
+                                "op": "lt",
+                                "value": 0.01,
+                                "fail_status": "BLOCK_CURRENT_RESIDUAL_GT_0P01",
+                            },
+                            {
+                                "metric": "cLi_CF_min_series",
+                                "source": "summary_rows",
+                                "op": "gt",
+                                "value": 0.0,
+                                "fail_status": "BLOCK_NEGATIVE_CLI_CF",
+                            },
+                        ],
+                    }
+                ],
+            },
+        )
+
+        schema_code, schema_report = run_runner("tracegate_schema_check.py", root)
+        self.assertEqual((schema_code, schema_report["status"]), (0, "PASS"))
+
+        code, report = run_runner("tracegate_kpi_check.py", root)
+        self.assertEqual(code, 2)
+        self.assertEqual(report["status"], "BLOCK")
+        messages = "\n".join(check["message"] for check in report["checks"])
+        self.assertIn("report declares full-window coverage", messages)
+        self.assertIn("max_abs_current_residual=0.2 violates lt 0.01", messages)
+        self.assertIn("cLi_CF_min_series=1 satisfies gt 0", messages)
+
+    def test_kpi_check_requires_full_window_when_declared(self) -> None:
+        root = self.make_project()
+        write_json(root / "GATE_REPORTS" / "partial_physical.json", {"metrics": {"x": 1.0}})
+        write_json(
+            root / "PHYSICAL_KPI_GATES.json",
+            {
+                "version": "1.0",
+                "gates": [
+                    {
+                        "gate_id": "KPI002",
+                        "input_file": "GATE_REPORTS/partial_physical.json",
+                        "requires_full_window": True,
+                        "thresholds": [{"metric": "x", "op": "gt", "value": 0.0}],
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_kpi_check.py", root)
+        self.assertEqual((code, report["status"]), (2, "BLOCK"))
+        messages = "\n".join(check["message"] for check in report["checks"])
+        self.assertIn("requires full-window coverage metadata", messages)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -26,6 +26,7 @@ SCHEMA_MAP = {
 OPTIONAL_JSON_SCHEMA_MAP = {
     "ROOT_LOCK.json": REPO_ROOT / "schemas" / "ROOT_LOCK.schema.json",
     "LEGACY_GATE_BINDINGS.json": REPO_ROOT / "schemas" / "LEGACY_GATE_BINDINGS.schema.json",
+    "PHYSICAL_KPI_GATES.json": REPO_ROOT / "schemas" / "PHYSICAL_KPI_GATES.schema.json",
 }
 
 

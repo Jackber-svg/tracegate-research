@@ -49,6 +49,7 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
    - `tracegate_source_check.py` for parameter/source consistency.
    - `tracegate_equation_check.py` for equation-form closure.
    - `tracegate_extension_scan.py` for residual extension tokens.
+   - `tracegate_kpi_check.py` for configured numeric KPI thresholds in `PHYSICAL_KPI_GATES.json`.
 
 ## Fail-Closed Conditions
 
@@ -65,7 +66,7 @@ Stop and report `BLOCK` when:
 - A source value, encoded value, unit conversion, or implementation value cannot be reconciled.
 - An extension is disabled but active runtime artifacts still contain forbidden tokens.
 - KPI/domain metrics pass but `equation_form_gate` fails.
-- `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, or `tracegate_extension_scan.py` returns `BLOCK`.
+- `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, `tracegate_extension_scan.py`, or `tracegate_kpi_check.py` returns `BLOCK`.
 - External audit has unresolved `BLOCK` or `CRITICAL` findings.
 
 ## Output Style

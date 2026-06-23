@@ -46,6 +46,7 @@ project/
   SOURCE_MANIFEST.json             when source_lock_gate is declared
   EQUATION_MANIFEST.json           when equation_form_gate is declared
   EXTENSION_KEYWORD_MANIFEST.json  when extension_residual_gate is declared
+  PHYSICAL_KPI_GATES.json          when numeric KPI gates are declared
   UNIT_REGISTRY.json               when unit normalization is used
   LEGACY_GATE_BINDINGS.json        when old gate tables are bound into TraceGate
 
@@ -278,9 +279,9 @@ rules:
 | adapter_postprocess_gate | adapter_postprocess_run, adapter_query, artifact_existence_check | postprocess_required |
 | implementation_gate | adapter_query, cross_artifact_match, unit_normalization_check | adapter plus registry exist |
 | external_audit_gate | external_audit_check, decision_audit, artifact_existence_check | declared by contract |
-| domain_metric_gate | domain_metric_check | contract-dependent |
-| conservation_gate | domain_conservation_check, domain_metric_check | contract-dependent |
-| range_gate | domain_range_check, domain_metric_check | contract-dependent |
+| domain_metric_gate | domain_metric_check, numeric_kpi_threshold_check | contract-dependent |
+| conservation_gate | domain_conservation_check, domain_metric_check, numeric_kpi_threshold_check | contract-dependent |
+| range_gate | domain_range_check, domain_metric_check, numeric_kpi_threshold_check | contract-dependent |
 
 KPI or domain gates cannot override `source_lock_gate`, `equation_form_gate`, `extension_residual_gate`, or `contract_load_gate`.
 
@@ -343,6 +344,14 @@ These check types are the release minimum. Detailed schemas should live in `sche
     "legacy_gate_bindings_file": "LEGACY_GATE_BINDINGS.json",
     "required_gate_ids": ["GATE_001"],
     "block_if_missing_machine_effect": true
+  },
+  "numeric_kpi_threshold_check": {
+    "kpi_gate_file": "PHYSICAL_KPI_GATES.json",
+    "input_file": "GATE_REPORTS/domain_metrics.json",
+    "requires_full_window": true,
+    "thresholds": [
+      {"metric": "residual", "source": "metrics", "op": "lt", "value": 0.01}
+    ]
   }
 }
 ```
@@ -595,7 +604,7 @@ Every new session must start from the project directory, not the chat transcript
 13. If equation_form_gate is required and adapter has extract_expressions, run equation_form_check after adapter_export.
 14. If extension_residual_gate is required, run extension_residual_scan.
 15. Run external_audit_gate if declared.
-16. Run all required non-optional domain gates.
+16. Run all required non-optional domain gates. If PHYSICAL_KPI_GATES.json exists, run tracegate_kpi_check.py.
 17. Answer cold-start questions and update next_allowed_actions.
 ```
 
@@ -704,6 +713,7 @@ Failed or partial work may be archived as evidence, but must not overwrite the l
 [ ] extension_residual_scan checks MODEL_STATE, expression dumps, and source trees.
 [ ] equation_form_check runs before KPI or domain metric gates.
 [ ] KPI gates cannot override equation_form_gate.
+[ ] If PHYSICAL_KPI_GATES.json exists, tracegate_kpi_check.py runs and reports PASS/WARN/BLOCK separately from tracegate_check.py.
 [ ] external_audit_gate can block unresolved external findings.
 [ ] Cold-start test passes from project directory only.
 [ ] Dummy project passes all required gates in STAGING mode.
@@ -722,6 +732,7 @@ schemas/
   SOURCE_MANIFEST.schema.json
   EQUATION_MANIFEST.schema.json
   EXTENSION_KEYWORD_MANIFEST.schema.json
+  PHYSICAL_KPI_GATES.schema.json
   TASK_CONTRACT.schema.json
   ROOT_LOCK.schema.json
   LEGACY_GATE_BINDINGS.schema.json
@@ -737,6 +748,7 @@ runner/
   tracegate_source_check.py
   tracegate_equation_check.py
   tracegate_extension_scan.py
+  tracegate_kpi_check.py
   gate_runner.py
   hash_manifest.py
   source_lock.py
