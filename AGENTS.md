@@ -10,6 +10,12 @@ Before changing project state, read:
 references/protocol.md
 ```
 
+For literature-derived parameter extraction or source-evidence audits, also read:
+
+```text
+references/literature_extraction.md
+```
+
 At minimum, inspect these sections:
 
 - Six Questions
@@ -17,6 +23,8 @@ At minimum, inspect these sections:
 - Startup Protocol
 - Checkpoint Rule
 - Release Readiness Checklist
+
+For literature extraction, run the R0-R5 workflow before strengthening any registry `source_status` or treating a parameter as source-supported.
 
 ## Operating Rule
 
@@ -51,6 +59,7 @@ Report `BLOCK` instead of continuing when:
 - required manifests or gate inputs are missing
 - artifact manifest hash does not match `STATE.json`
 - source values, unit conversions, or implementation values cannot be reconciled
+- a registry value cannot be found in the cited source evidence
 - `SOURCE_INCOMPLETE` lacks an accepted decision
 - an extension is disabled but active runtime artifacts still contain forbidden tokens
 - KPI/domain gates pass but equation-form gates fail

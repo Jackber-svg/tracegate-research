@@ -57,6 +57,7 @@ project/
   schemas/                         machine-readable schemas
   runner/                          gate runner scripts
   references/                      explanatory docs and examples
+    literature_extraction.md       R0-R5 original-value audit for source-derived parameters
 ```
 
 Conditional manifest files are required only when their corresponding gate is declared in `CONTRACT.yaml` or required by the current mode. If a gate is declared but its required manifest is missing, the result is `BLOCK`. If the gate is not declared and the manifest is absent, the result is `SKIPPED_NOT_CONFIGURED`.
@@ -360,6 +361,23 @@ These check types are the release minimum. Detailed schemas should live in `sche
 
 Registration is not enough. A parameter can be registered and still be wrong because of a copied digit, missed sign, axis multiplier, or unit conversion error.
 
+For literature-derived parameters, run the literature extraction subworkflow in
+`references/literature_extraction.md` before treating `PARAMETER_REGISTRY.json`
+as source-supported. The subworkflow adds an R0 original-value check before
+ordinary registry self-consistency checks:
+
+```text
+R0 Original value check       registry value versus paper/source value
+R1 Provenance check           DOI, source identity, material, and locator
+R2 Evidence grade check       grade inflation and weak evidence
+R3 Duplicate lineage check    repeated secondary-source values
+R4 Physical consistency check units, signs, directions, and physical coherence
+R5 Baseline admission check   whether the value can enter baseline
+```
+
+R0 is fail-closed: a value present in the registry but not found in the cited
+source is `BLOCK`, even if the registry is internally consistent.
+
 `SOURCE_MANIFEST.json` records what the source actually says and how it becomes the encoded model value.
 
 ```json
@@ -599,13 +617,14 @@ Every new session must start from the project directory, not the chat transcript
 8. If GATE_REPORTS/expected_warn_staging.json exists, decide whether WARN is expected or unsafe before continuing.
 9. If LEGACY_GATE_BINDINGS.json exists, bind legacy gate statuses to allowed claims, blocked claims, and promotion effects.
 10. If full profile, read PARAMETER_REGISTRY.json.
-11. If source_lock_gate is required, read SOURCE_MANIFEST.json and run source_original_value_cross_check.
-12. If adapter exists, read ADAPTER.yaml, validate capabilities, and run adapter_export if required.
-13. If equation_form_gate is required and adapter has extract_expressions, run equation_form_check after adapter_export.
-14. If extension_residual_gate is required, run extension_residual_scan.
-15. Run external_audit_gate if declared.
-16. Run all required non-optional domain gates. If PHYSICAL_KPI_GATES.json exists, run tracegate_kpi_check.py.
-17. Answer cold-start questions and update next_allowed_actions.
+11. If literature-derived source evidence is being extracted or audited, read references/literature_extraction.md and run the R0-R5 workflow before strengthening source_status.
+12. If source_lock_gate is required, read SOURCE_MANIFEST.json and run source_original_value_cross_check.
+13. If adapter exists, read ADAPTER.yaml, validate capabilities, and run adapter_export if required.
+14. If equation_form_gate is required and adapter has extract_expressions, run equation_form_check after adapter_export.
+15. If extension_residual_gate is required, run extension_residual_scan.
+16. Run external_audit_gate if declared.
+17. Run all required non-optional domain gates. If PHYSICAL_KPI_GATES.json exists, run tracegate_kpi_check.py.
+18. Answer cold-start questions and update next_allowed_actions.
 ```
 
 Cold-start questions:
@@ -707,6 +726,7 @@ Failed or partial work may be archived as evidence, but must not overwrite the l
 [ ] ADAPTER_CAPABILITY includes extract_expressions.
 [ ] equation_form_gate is SKIPPED_NOT_APPLICABLE, not PASS, when extraction is unavailable.
 [ ] PARAMETER_REGISTRY includes source_anchor, source_status, and source_decision_id.
+[ ] Literature-derived registry values have passed R0 original-value checks or are marked SOURCE_MISSING / SOURCE_INCOMPLETE / FIGURE_DIGITIZED / DERIVED / INFERRED as appropriate.
 [ ] source_original_value_cross_check validates original value, encoded value, and conversion.
 [ ] unit_conversion_check validates dimensions, aliases, and conversion factors.
 [ ] SOURCE_INCOMPLETE decision branch exists.
@@ -756,6 +776,7 @@ runner/
   extension_residual_scan.py
 references/
   protocol.md
+  literature_extraction.md
   adapter_authoring.md
   decision_protocol.md
   examples.md

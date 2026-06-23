@@ -10,6 +10,8 @@ Before modifying a research project that claims to use TraceGate Research:
 4. Run the Startup Protocol from the protocol document.
 5. Do not promote a checkpoint unless the Checkpoint Rule is satisfied.
 
+For literature-derived parameter extraction or source-evidence audits, read `references/literature_extraction.md` and run the R0-R5 workflow before strengthening `source_status` or treating a registry value as source-supported.
+
 If required state, contract, manifest, source, adapter, or gate artifacts are missing, report `BLOCK` and state exactly which artifact is missing.
 
 Never treat a passing KPI as sufficient if source locks, equation-form gates, extension-residual gates, or external audit gates are unresolved.

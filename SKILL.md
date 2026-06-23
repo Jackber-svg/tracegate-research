@@ -1,6 +1,6 @@
 ---
 name: tracegate
-description: Runner-backed fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, source provenance checks, equation-form checks, extension residual scans, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
+description: Runner-backed fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, literature extraction from source evidence, source provenance checks, equation-form checks, extension residual scans, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
 ---
 
 # TraceGate Research
@@ -20,6 +20,8 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 - `Startup Protocol`
 - `Checkpoint Rule`
 - `Release Readiness Checklist`
+
+For literature-derived parameter extraction or source-evidence audits, also read `references/literature_extraction.md` before judging whether registry values are source-supported.
 
 ## Workflow
 
@@ -41,6 +43,7 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 4. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
 5. After an intentional file edit, use `python runner/tracegate_fix_hashes.py <project_dir>` to refresh declared hashes, then rerun `tracegate_check.py`.
 6. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
+   - For literature extraction from PDFs, text, webpages, tables, figures, or supplementary files, use `references/literature_extraction.md` and run the R0-R5 audit before strengthening any `source_status`.
 7. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
 8. For baseline promotion, use `python runner/tracegate_promote.py <project_dir>` only after checks pass and zero open decisions remain.
 9. Use optional focused runners when corresponding files exist:
