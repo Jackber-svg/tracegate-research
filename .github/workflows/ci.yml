@@ -21,7 +21,8 @@ jobs:
         run: python -m py_compile runner/*.py
         shell: bash
       - name: Validate skill
-        run: python - <<'PY'
+        run: |
+          python - <<'PY'
           import re
           from pathlib import Path
           text = Path("SKILL.md").read_text(encoding="utf-8")
