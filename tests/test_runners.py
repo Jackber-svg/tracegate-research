@@ -178,6 +178,59 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertEqual(report["status"], "BLOCK")
 
+    def test_schema_check_validates_p0_hardening_files(self) -> None:
+        root = self.make_project()
+        (root / "TASK_CONTRACT.yaml").write_text(
+            "\n".join(
+                [
+                    'version: "1.0"',
+                    'task_id: "P0_TEST"',
+                    "objective:",
+                    '  - "lock handoff"',
+                    "non_goals:",
+                    '  - "promote baseline"',
+                    "allowed_actions:",
+                    '  - "diagnostic_work"',
+                    "blocked_actions:",
+                    '  - "baseline_promotion"',
+                    "expected_startup_status:",
+                    '  status: "WARN"',
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        write_json(
+            root / "ROOT_LOCK.json",
+            {
+                "version": "1.0",
+                "authority_root": str(root),
+                "project_root": str(root),
+                "forbidden_authority_roots": [str(root.parent / "stale")],
+                "path_policy": {"block_if_cwd_under_forbidden_root": True},
+            },
+        )
+        write_json(
+            root / "LEGACY_GATE_BINDINGS.json",
+            {
+                "version": "1.0",
+                "bindings": [
+                    {
+                        "gate_id": "G001",
+                        "status": "FAIL_CLOSED",
+                        "machine_effect": {"blocks_baseline": True},
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_schema_check.py", root)
+        self.assertEqual(code, 0)
+        self.assertEqual(report["status"], "PASS")
+        messages = "\n".join(check["message"] for check in report["checks"])
+        self.assertIn("ROOT_LOCK.json matches bundled schema", messages)
+        self.assertIn("LEGACY_GATE_BINDINGS.json matches bundled schema", messages)
+        self.assertIn("TASK_CONTRACT.yaml has minimal required task-boundary fields", messages)
+
 
 if __name__ == "__main__":
     unittest.main()

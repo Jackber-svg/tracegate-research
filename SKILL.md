@@ -26,10 +26,17 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 1. Locate or create the TraceGate Research project files:
    - `STATE.json`
    - `CONTRACT.yaml`
+   - optional `TASK_CONTRACT.yaml`
+   - optional `ROOT_LOCK.json`
+   - optional `LEGACY_GATE_BINDINGS.json`
    - `ARTIFACT_MANIFEST.json`
    - `DECISIONS.jsonl`
    - `GATE_REPORTS/`
 2. Run the startup protocol from `references/protocol.md`.
+   - If `TASK_CONTRACT.yaml` exists, read it before acting.
+   - If `ROOT_LOCK.json` exists, verify the current project root is authoritative.
+   - If `GATE_REPORTS/expected_warn_staging.json` exists, treat `WARN` according to that report instead of guessing.
+   - If `LEGACY_GATE_BINDINGS.json` exists, use it to map legacy gates to blocked claims and allowed diagnostic continuation.
 3. When a project directory does not exist, use `python runner/tracegate_init.py <project_dir> --project <name>` to create the minimal file skeleton.
 4. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
 5. After an intentional file edit, use `python runner/tracegate_fix_hashes.py <project_dir>` to refresh declared hashes, then rerun `tracegate_check.py`.
@@ -48,6 +55,9 @@ For any setup, audit, repair, or handoff task, read `references/protocol.md` bef
 Stop and report `BLOCK` when:
 
 - `CONTRACT.yaml` or listed task-contract files cannot be read or hash-verified.
+- `ROOT_LOCK.json` declares the current directory to be a forbidden or non-authoritative mirror.
+- `LEGACY_GATE_BINDINGS.json` maps a legacy gate to `FAIL_CLOSED` or diagnostic-only status but the agent attempts promotion.
+- `expected_warn_staging.json` says `WARN` is expected but an agent silently treats it as `PASS`.
 - `ARTIFACT_MANIFEST.json` does not match `STATE.json`.
 - A required gate is declared but its manifest or input artifact is missing.
 - `tracegate_promote.py` refuses promotion or post-promotion check does not pass.

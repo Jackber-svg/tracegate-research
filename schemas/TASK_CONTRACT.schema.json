@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/TASK_CONTRACT.schema.json",
+  "title": "TraceGate Research TASK_CONTRACT.yaml parsed form",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "task_id",
+    "objective",
+    "non_goals",
+    "allowed_actions",
+    "blocked_actions"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_root": {
+      "type": "string"
+    },
+    "project_root": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": ["DISCOVERY", "STAGING", "VALIDATION", "BASELINE"]
+    },
+    "profile": {
+      "enum": ["lite", "full"]
+    },
+    "objective": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowed_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_startup_status": {
+      "type": "object"
+    },
+    "promotion_policy": {
+      "type": "object"
+    }
+  }
+}

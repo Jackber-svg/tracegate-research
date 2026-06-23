@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/LEGACY_GATE_BINDINGS.schema.json",
+  "title": "TraceGate Research LEGACY_GATE_BINDINGS.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "bindings"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "binding_id": {
+      "type": "string"
+    },
+    "source_table": {
+      "type": "string"
+    },
+    "source_gate_report": {
+      "type": "string"
+    },
+    "global_effect": {
+      "type": "object",
+      "properties": {
+        "strict_larsson_core_promotion": {
+          "type": "string"
+        },
+        "diagnostic_branch": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "gate_id",
+          "status",
+          "machine_effect"
+        ],
+        "properties": {
+          "gate_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "severity": {
+            "type": "string"
+          },
+          "machine_effect": {
+            "type": "object"
+          },
+          "required_resolution": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "claim_policy": {
+      "type": "object",
+      "properties": {
+        "allowed_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

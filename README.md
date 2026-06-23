@@ -22,6 +22,22 @@ TraceGate is fail-closed by default. It does not prove that a result is true, bu
 - Keep cloned fixtures hash-stable across platforms.
 - Keep failure visible by blocking unsafe continuation instead of silently repairing the story.
 
+## P0 Handoff Hardening Pattern
+
+TraceGate projects often start as a wrapper around an existing long-running research effort. In that stage the goal is not full scientific automation yet; it is to prevent the next agent from continuing from the wrong root, wrong task boundary, or wrong interpretation of a non-passing state.
+
+For this P0 stage, use four optional but recommended files:
+
+```text
+TASK_CONTRACT.yaml          Current task objective, non-goals, allowed actions, blocked actions.
+ROOT_LOCK.json              Authoritative project root and forbidden mirror/stale roots.
+LEGACY_GATE_BINDINGS.json   Machine-readable binding from legacy gates to claim/promotion effects.
+GATE_REPORTS/expected_warn_staging.json
+                            Explicit explanation of expected WARN states in STAGING.
+```
+
+This pattern is useful when a project has duplicate working directories, old CSV gate tables, diagnostic branches that must not be promoted, or an expected `WARN` state caused by open blockers. It turns "this warning is intentional" into a file-grounded startup fact instead of a chat-memory explanation.
+
 ## Install for Codex
 
 Use this repository as a Codex skill. The repository root contains `SKILL.md`, so Codex can discover the skill directly after installation.

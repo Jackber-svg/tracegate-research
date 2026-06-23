@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/ROOT_LOCK.schema.json",
+  "title": "TraceGate Research ROOT_LOCK.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "version",
+    "authority_root",
+    "project_root",
+    "forbidden_authority_roots",
+    "path_policy"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root_lock_id": {
+      "type": "string"
+    },
+    "authority_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "forbidden_authority_roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "path_policy": {
+      "type": "object",
+      "required": [
+        "block_if_cwd_under_forbidden_root"
+      ],
+      "properties": {
+        "authoritative_files_must_be_under": {
+          "type": "string"
+        },
+        "desktop_mirror_status": {
+          "type": "string"
+        },
+        "desktop_mirror_allowed_use": {
+          "type": "string"
+        },
+        "block_if_cwd_under_forbidden_root": {
+          "type": "boolean"
+        },
+        "block_if_manifest_path_points_outside_authority_root": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "reason": {
+      "type": "string"
+    },
+    "startup_instruction": {
+      "type": "string"
+    }
+  }
+}

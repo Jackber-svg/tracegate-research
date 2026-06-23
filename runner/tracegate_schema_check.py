@@ -23,6 +23,11 @@ SCHEMA_MAP = {
     "ARTIFACT_MANIFEST.json": REPO_ROOT / "schemas" / "ARTIFACT_MANIFEST.schema.json",
 }
 
+OPTIONAL_JSON_SCHEMA_MAP = {
+    "ROOT_LOCK.json": REPO_ROOT / "schemas" / "ROOT_LOCK.schema.json",
+    "LEGACY_GATE_BINDINGS.json": REPO_ROOT / "schemas" / "LEGACY_GATE_BINDINGS.schema.json",
+}
+
 
 def type_matches(value: Any, expected: str | list[str]) -> bool:
     if isinstance(expected, list):
@@ -144,6 +149,24 @@ def validate_contract_text(project: Path) -> list[Check]:
     return checks
 
 
+def validate_task_contract_text(project: Path) -> list[Check]:
+    path = project / "TASK_CONTRACT.yaml"
+    checks: list[Check] = []
+    if not path.is_file():
+        checks.append(Check("SKIPPED_NOT_CONFIGURED", "task_contract_missing", "TASK_CONTRACT.yaml is not configured"))
+        return checks
+    text = path.read_text(encoding="utf-8", errors="replace")
+    required_tokens = ["version:", "task_id:", "objective:", "non_goals:", "allowed_actions:", "blocked_actions:"]
+    missing = [token for token in required_tokens if token not in text]
+    if missing:
+        checks.append(Check("BLOCK", "task_contract_schema_minimal", f"TASK_CONTRACT.yaml missing tokens: {', '.join(missing)}"))
+    else:
+        checks.append(Check("PASS", "task_contract_schema_minimal", "TASK_CONTRACT.yaml has minimal required task-boundary fields"))
+    if "expected_startup_status:" in text and "status:" not in text:
+        checks.append(Check("BLOCK", "task_contract_expected_status_missing", "expected_startup_status is declared without a status field"))
+    return checks
+
+
 def run(project: Path) -> dict[str, Any]:
     project = project.resolve()
     checks: list[Check] = []
@@ -166,7 +189,27 @@ def run(project: Path) -> dict[str, Any]:
                 checks.append(Check("BLOCK", "schema_validate", f"{file_name} {error}"))
         else:
             checks.append(Check("PASS", "schema_validate", f"{file_name} matches bundled schema"))
+    for file_name, schema_path in OPTIONAL_JSON_SCHEMA_MAP.items():
+        file_path = project / file_name
+        if not file_path.is_file():
+            checks.append(Check("SKIPPED_NOT_CONFIGURED", "schema_optional_missing", f"{file_name} is not configured"))
+            continue
+        data, err = load_json(file_path)
+        if err or data is None:
+            checks.append(Check("BLOCK", "schema_input_parse_error", f"{file_name} parse failed: {err}"))
+            continue
+        schema, schema_err = load_json(schema_path)
+        if schema_err or not isinstance(schema, dict):
+            checks.append(Check("BLOCK", "schema_file_error", f"schema read failed for {file_name}: {schema_err}"))
+            continue
+        errors = validate_schema(data, schema)
+        if errors:
+            for error in errors:
+                checks.append(Check("BLOCK", "schema_validate", f"{file_name} {error}"))
+        else:
+            checks.append(Check("PASS", "schema_validate", f"{file_name} matches bundled schema"))
     checks.extend(validate_contract_text(project))
+    checks.extend(validate_task_contract_text(project))
     return make_report(project, "tracegate_schema_check", checks)
 
 
