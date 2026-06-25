@@ -57,7 +57,7 @@ project/
   schemas/                         machine-readable schemas
   runner/                          gate runner scripts
   references/                      explanatory docs and examples
-    literature_extraction.md       R-1 to R5 original-value audit for source-derived parameters
+    literature_extraction.md       full R-1 to R5 audit, including R0.5 primary-source chain closure
 ```
 
 Conditional manifest files are required only when their corresponding gate is declared in `CONTRACT.yaml` or required by the current mode. If a gate is declared but its required manifest is missing, the result is `BLOCK`. If the gate is not declared and the manifest is absent, the result is `SKIPPED_NOT_CONFIGURED`.
@@ -268,7 +268,7 @@ rules:
 | legacy_gate_binding_gate | legacy_gate_binding_file_check, json_array_scan | when legacy gate tables are used as evidence |
 | registry_gate | json_array_scan, cross_artifact_match, adapter_query | parameterized projects |
 | registry_closure_gate | json_array_scan, cross_artifact_match | VALIDATION and BASELINE |
-| source_lock_gate | source_original_value_cross_check, unit_conversion_check | declared or SOURCE_MANIFEST exists |
+| source_lock_gate | source_original_value_cross_check, primary_provenance_chain_check, unit_conversion_check | declared or SOURCE_MANIFEST exists |
 | extension_residual_gate | extension_residual_scan | declared or EXTENSION_KEYWORD_MANIFEST exists |
 | equation_form_gate | equation_form_check, cross_artifact_match | declared or EQUATION_MANIFEST exists |
 | artifact_existence_gate | artifact_existence_check, json_array_scan, hash_verify | full profile |
@@ -305,6 +305,15 @@ These check types are the release minimum. Detailed schemas should live in `sche
     "require_source_anchor": true,
     "require_conversion_record": true,
     "tolerance_policy": "from_registry_comparison_field"
+  },
+  "primary_provenance_chain_check": {
+    "registry_file": "PARAMETER_REGISTRY.json",
+    "source_manifest_file": "SOURCE_MANIFEST.json",
+    "relay_source_classes": ["secondary_source", "secondary_figure", "secondary_fit", "compiled_table", "review", "literature_range", "figure_digitized", "digitized_fit", "model_fit_from_literature_figure", "derived_from_secondary", "transcribed_secondary", "proxy"],
+    "primary_source_classes": ["primary_measurement", "primary_experiment", "primary_dataset", "primary_datasheet", "direct_measurement", "lab_measurement", "instrument_export", "standard"],
+    "require_primary_source_id_for_relay": true,
+    "require_verified_chain_for_baseline": true,
+    "require_decision_for_baseline_relay": true
   },
   "unit_conversion_check": {
     "unit_registry_file": "UNIT_REGISTRY.json",
@@ -369,6 +378,7 @@ ordinary registry self-consistency checks:
 ```text
 R-1 Evidence file inventory  local files, hashes, type, readability, source coverage
 R0 Original value check       registry value versus paper/source value
+R0.5 Primary-source chain     secondary/digitized sources traced to original measurement source
 R1 Provenance check           DOI, source identity, material, and locator
 R2 Evidence grade check       grade inflation and weak evidence
 R3 Duplicate/conflict check   repeated secondary-source values and conflicting values
@@ -387,8 +397,27 @@ or if a registry value cannot be found in the cited source, the result is
   "version": "1.0",
   "sources": [{
     "source_id": "SRC-EXAMPLE-FIGURE",
+    "source_class": "figure_digitized",
     "artifact_id": "ART-SOURCE-PDF-001",
     "locator": "Fig.2a",
+    "primary_source_id": "SRC-EXAMPLE-PRIMARY",
+    "provenance_decision_id": "D-SRC-001",
+    "provenance_chain": [
+      {
+        "source_id": "SRC-EXAMPLE-PRIMARY",
+        "role": "primary_measurement",
+        "verification_status": "PRIMARY_SOURCE_VERIFIED",
+        "artifact_id": "ART-PRIMARY-PDF-001",
+        "locator": "Table 2"
+      },
+      {
+        "source_id": "SRC-EXAMPLE-FIGURE",
+        "role": "digitized_fit",
+        "verification_status": "VERIFIED_AGAINST_PRIMARY",
+        "artifact_id": "ART-SOURCE-PDF-001",
+        "locator": "Fig.2a"
+      }
+    ],
     "source_status": "SOURCE_INCOMPLETE",
     "source_incomplete_reason": "coefficients appear only as a plotted curve, not as a table",
     "extraction_method": "digitization",
@@ -415,7 +444,21 @@ For every baseline_allowed parameter with source_anchor:
   registry.source_anchor.original_value must match source_manifest.original_value.
   If units differ, conversion_factor and conversion_note are required.
   If source_status is SOURCE_INCOMPLETE, source_decision_id is required.
+  If source_class is a relay class, primary_source_id and verified provenance_chain are required.
 ```
+
+Relay source classes include review, compiled_table, literature_range,
+secondary_source, secondary_figure, secondary_fit, figure_digitized,
+digitized_fit, model_fit_from_literature_figure, transcribed_secondary,
+derived_from_secondary, and proxy. These sources can be useful evidence, but
+they are not primary-source closed until the chain reaches the original
+measurement, dataset, datasheet, instrument export, standard, or direct
+experiment and each transfer hop is marked verified.
+
+Passing source lock against a relay source is not enough. A digitized figure
+can match the cited figure while the cited figure still misquotes, smooths, or
+re-fits the original paper. Baseline use requires chain closure, or the claim
+must remain diagnostic/source-incomplete.
 
 ## 9. Source-Incomplete Decisions
 
@@ -619,8 +662,8 @@ Every new session must start from the project directory, not the chat transcript
 8. If GATE_REPORTS/expected_warn_staging.json exists, decide whether WARN is expected or unsafe before continuing.
 9. If LEGACY_GATE_BINDINGS.json exists, bind legacy gate statuses to allowed claims, blocked claims, and promotion effects.
 10. If full profile, read PARAMETER_REGISTRY.json.
-11. If literature-derived source evidence is being extracted or audited, read references/literature_extraction.md and run the R-1 to R5 workflow before strengthening source_status.
-12. If source_lock_gate is required, read SOURCE_MANIFEST.json and run source_original_value_cross_check.
+11. If literature-derived source evidence is being extracted or audited, read references/literature_extraction.md and run the full R-1 to R5 workflow, including R0.5 primary-source chain closure, before strengthening source_status.
+12. If source_lock_gate is required, read SOURCE_MANIFEST.json and run source_original_value_cross_check plus primary_provenance_chain_check.
 13. If adapter exists, read ADAPTER.yaml, validate capabilities, and run adapter_export if required.
 14. If equation_form_gate is required and adapter has extract_expressions, run equation_form_check after adapter_export.
 15. If extension_residual_gate is required, run extension_residual_scan.
@@ -730,6 +773,7 @@ Failed or partial work may be archived as evidence, but must not overwrite the l
 [ ] PARAMETER_REGISTRY includes source_anchor, source_status, and source_decision_id.
 [ ] Literature-derived registry values have passed R-1 evidence-file inventory and R0 original-value checks or are marked SOURCE_MISSING / SOURCE_UNVERIFIED / SOURCE_INCOMPLETE / FIGURE_DIGITIZED / DERIVED / INFERRED as appropriate.
 [ ] source_original_value_cross_check validates original value, encoded value, and conversion.
+[ ] Relay sources such as digitized figures, review tables, secondary fits, or compiled ranges declare primary_source_id and verified provenance_chain.
 [ ] unit_conversion_check validates dimensions, aliases, and conversion factors.
 [ ] SOURCE_INCOMPLETE decision branch exists.
 [ ] extension_residual_scan checks MODEL_STATE, expression dumps, and source trees.

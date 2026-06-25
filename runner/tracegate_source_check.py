@@ -17,7 +17,41 @@ if str(RUNNER_DIR) not in sys.path:
 from tracegate_common import Check, load_json, make_report, print_report, status_code
 
 
-BAD_BASELINE_SOURCE_STATUSES = {"SOURCE_MISSING", "SOURCE_REJECTED"}
+BAD_BASELINE_SOURCE_STATUSES = {"SOURCE_MISSING", "SOURCE_REJECTED", "SOURCE_UNVERIFIED"}
+
+PRIMARY_SOURCE_CLASSES = {
+    "primary_measurement",
+    "primary_experiment",
+    "primary_dataset",
+    "primary_datasheet",
+    "direct_measurement",
+    "lab_measurement",
+    "instrument_export",
+    "standard",
+}
+
+RELAY_SOURCE_CLASSES = {
+    "secondary_source",
+    "secondary_figure",
+    "secondary_fit",
+    "compiled_table",
+    "review",
+    "literature_range",
+    "figure_digitized",
+    "digitized_fit",
+    "model_fit_from_literature_figure",
+    "derived_from_secondary",
+    "transcribed_secondary",
+    "proxy",
+}
+
+PRIMARY_VERIFIED_STATUSES = {
+    "VERIFIED",
+    "PRIMARY_SOURCE_VERIFIED",
+    "VERIFIED_AGAINST_PRIMARY",
+    "VERIFIED_AGAINST_PARENT",
+    "CROSS_CHECKED_TO_PRIMARY",
+}
 
 
 def as_number(value: Any) -> float | None:
@@ -36,16 +70,124 @@ def numeric_close(left: float, right: float, tolerance: float) -> bool:
     return math.isclose(left, right, rel_tol=0.0, abs_tol=tolerance)
 
 
-def source_index(source_manifest: dict[str, Any]) -> tuple[set[str], dict[str, dict[str, Any]]]:
+def source_index(source_manifest: dict[str, Any]) -> tuple[set[str], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
     sources: set[str] = set()
+    source_rows: dict[str, dict[str, Any]] = {}
     for source in source_manifest.get("sources", []):
         if isinstance(source, dict) and source.get("source_id"):
-            sources.add(str(source["source_id"]))
+            source_id = str(source["source_id"])
+            sources.add(source_id)
+            source_rows[source_id] = source
     values: dict[str, dict[str, Any]] = {}
     for value in source_manifest.get("values", []):
         if isinstance(value, dict) and value.get("parameter"):
             values[str(value["parameter"])] = value
-    return sources, values
+    return sources, source_rows, values
+
+
+def first_string(*values: Any) -> str | None:
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def check_primary_provenance(parameter: str, row: dict[str, Any], source_id: str, source: dict[str, Any], source_rows: dict[str, dict[str, Any]]) -> list[Check]:
+    checks: list[Check] = []
+    baseline_allowed = row.get("baseline_allowed") is True
+    source_class = first_string(
+        source.get("source_class"),
+        source.get("source_kind"),
+        source.get("class"),
+        row.get("source_class"),
+    )
+
+    if baseline_allowed and source_class is None:
+        checks.append(Check("BLOCK", "baseline_source_class_missing", f"{parameter}: baseline source {source_id} must declare source_class/source_kind so primary vs relay status is auditable"))
+        return checks
+    if source_class is None:
+        checks.append(Check("WARN", "source_class_missing", f"{parameter}: source {source_id} does not declare primary/relay source class"))
+        return checks
+
+    normalized_class = source_class.lower()
+    if normalized_class in PRIMARY_SOURCE_CLASSES:
+        checks.append(Check("PASS", "primary_source_declared", f"{parameter}: source {source_id} is declared as {normalized_class}"))
+        return checks
+
+    if normalized_class not in RELAY_SOURCE_CLASSES:
+        if baseline_allowed:
+            checks.append(Check("BLOCK", "baseline_source_class_unknown", f"{parameter}: baseline source {source_id} has unknown source_class {source_class!r}; cannot determine whether it is primary or relayed"))
+        else:
+            checks.append(Check("WARN", "source_class_unknown", f"{parameter}: source {source_id} has unknown source_class {source_class!r}"))
+        return checks
+
+    primary_source_id = first_string(
+        source.get("primary_source_id"),
+        source.get("original_source_id"),
+        row.get("primary_source_id"),
+    )
+    if not primary_source_id:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "primary_source_missing", f"{parameter}: relay source {source_id} ({normalized_class}) lacks primary_source_id"))
+        return checks
+    if primary_source_id not in source_rows:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "primary_source_not_found", f"{parameter}: primary_source_id {primary_source_id} is not listed in SOURCE_MANIFEST.sources[]"))
+        return checks
+
+    chain = source.get("provenance_chain")
+    if not isinstance(chain, list) or len(chain) < 2:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "provenance_chain_incomplete", f"{parameter}: relay source {source_id} must include provenance_chain from primary source to cited/encoded source"))
+        return checks
+
+    seen_primary = False
+    seen_current = False
+    bad_hops: list[str] = []
+    for idx, hop in enumerate(chain):
+        if not isinstance(hop, dict):
+            bad_hops.append(f"hop {idx} is not an object")
+            continue
+        hop_source_id = first_string(hop.get("source_id"))
+        role = first_string(hop.get("role")) or ""
+        verification = first_string(hop.get("verification_status"))
+        if not hop_source_id:
+            bad_hops.append(f"hop {idx} lacks source_id")
+        if not role:
+            bad_hops.append(f"hop {idx} lacks role")
+        if not verification or verification not in PRIMARY_VERIFIED_STATUSES:
+            bad_hops.append(f"hop {idx} has unverified status {verification!r}")
+        if hop_source_id == primary_source_id or "primary" in role.lower():
+            seen_primary = True
+        if hop_source_id == source_id or role.lower() in {"current", "cited_source", "encoded_source", "digitized_fit"}:
+            seen_current = True
+
+    if bad_hops:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "provenance_chain_unverified", f"{parameter}: " + "; ".join(bad_hops)))
+        return checks
+    if not seen_primary:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "provenance_chain_missing_primary", f"{parameter}: provenance_chain does not include primary source {primary_source_id}"))
+        return checks
+    if not seen_current:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "provenance_chain_missing_current", f"{parameter}: provenance_chain does not include cited source {source_id}"))
+        return checks
+
+    primary_row = source_rows[primary_source_id]
+    primary_class = first_string(primary_row.get("source_class"), primary_row.get("source_kind"), primary_row.get("class"))
+    if primary_class and primary_class.lower() in RELAY_SOURCE_CLASSES:
+        status = "BLOCK" if baseline_allowed else "WARN"
+        checks.append(Check(status, "primary_source_is_relay", f"{parameter}: declared primary source {primary_source_id} is itself marked as relay class {primary_class}"))
+        return checks
+
+    if baseline_allowed and normalized_class in RELAY_SOURCE_CLASSES and not first_string(row.get("source_decision_id"), source.get("provenance_decision_id")):
+        checks.append(Check("BLOCK", "relay_source_decision_missing", f"{parameter}: baseline use of relay source {source_id} requires source_decision_id or provenance_decision_id"))
+        return checks
+
+    checks.append(Check("PASS", "primary_provenance_chain", f"{parameter}: relay source {source_id} is chained to primary source {primary_source_id}"))
+    return checks
 
 
 def compare_encoded_value(parameter: str, row: dict[str, Any], source_value: dict[str, Any]) -> list[Check]:
@@ -106,7 +248,7 @@ def run(project: Path) -> dict[str, Any]:
         checks.append(Check("BLOCK", "parameter_registry_rows_missing", "PARAMETER_REGISTRY.json must contain rows[]"))
         return make_report(project, "tracegate_source_check", checks)
 
-    source_ids, source_values = source_index(source_manifest)
+    source_ids, source_rows, source_values = source_index(source_manifest)
     for idx, row in enumerate(rows):
         if not isinstance(row, dict):
             checks.append(Check("BLOCK", "parameter_row_invalid", f"row {idx} is not an object"))
@@ -130,6 +272,7 @@ def run(project: Path) -> dict[str, Any]:
             checks.append(Check("BLOCK", "source_id_missing", f"{parameter}: source_id {source_id} not found in SOURCE_MANIFEST.sources[]"))
         else:
             checks.append(Check("PASS", "source_id_resolved", f"{parameter}: source_id {source_id} resolved"))
+            checks.extend(check_primary_provenance(parameter, row, source_id, source_rows[source_id], source_rows))
         source_value = source_values.get(parameter)
         if source_value:
             checks.extend(compare_encoded_value(parameter, row, source_value))

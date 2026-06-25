@@ -11,6 +11,9 @@ The core failure this subskill prevents is:
 ```text
 The registry is internally consistent, but the value in the registry is not
 what the cited source actually says.
+
+The cited source is internally matched, but it is only a relayed source
+and has not been checked against the original measurement paper or dataset.
 ```
 
 The goal is not to make a parameter set look complete. The goal is to separate
@@ -61,11 +64,12 @@ applied, because the default workflow is read-only.
 
 ## Required Audit Rounds
 
-Run all seven rounds in order:
+Run all eight rounds in order:
 
 ```text
 R-1 Evidence file inventory
 R0  Original value check
+R0.5 Primary-source chain check
 R1  Provenance completeness
 R2  Evidence grade check
 R3  Duplicate, lineage, and conflict check
@@ -73,7 +77,7 @@ R4  Physical consistency check
 R5  Baseline admission check
 ```
 
-Later consistency checks cannot rescue a failed R-1 or R0 check.
+Later consistency checks cannot rescue a failed R-1, R0, or R0.5 check.
 
 ## R-1 Evidence File Inventory
 
@@ -219,6 +223,69 @@ source value only in supplementary files -> source_status must include SUPPLEMEN
 source value only in figure              -> source_status must include FIGURE_DIGITIZED or DIGITIZED_APPROXIMATE
 source does not contain the value        -> SOURCE_MISSING or remove parameter from baseline set
 ```
+
+## R0.5 Primary-Source Chain Check
+
+R0 only proves that the registry matches the cited local source. It does not
+prove that the cited source is the original measurement source.
+
+For every baseline candidate, classify the cited source:
+
+```text
+primary source:
+  original measurement paper, original dataset, original datasheet, direct
+  laboratory measurement, instrument export, or standard
+
+relayed source:
+  review, compiled table, secondary figure, secondary fit, literature range,
+  digitized plot, re-fitted curve, transcribed value, or proxy
+```
+
+If the cited source is relayed, output:
+
+```text
+registry_parameter
+cited_source_id
+cited_source_class
+primary_source_id
+provenance_chain
+chain_depth
+per_hop_verification_status
+primary_source_file
+primary_source_locator
+status: PASS | WARN | BLOCK
+```
+
+Required chain fields:
+
+```text
+primary_source_id
+provenance_chain[] with source_id, role, verification_status, and locator when available
+verification_status in:
+  VERIFIED
+  PRIMARY_SOURCE_VERIFIED
+  VERIFIED_AGAINST_PRIMARY
+  VERIFIED_AGAINST_PARENT
+  CROSS_CHECKED_TO_PRIMARY
+source_decision_id or provenance_decision_id for baseline use of a relayed source
+```
+
+Fail-closed rules:
+
+```text
+Baseline parameter + relayed source + no primary_source_id -> BLOCK
+Baseline parameter + relayed source + no provenance_chain -> BLOCK
+Baseline parameter + provenance_chain without primary hop -> BLOCK
+Baseline parameter + unverified transfer hop -> BLOCK
+Baseline parameter + declared primary source that is itself relayed -> BLOCK
+Baseline parameter + relayed source + no accepted decision -> BLOCK
+```
+
+This check prevents a common evidence-laundering error: a digitized fit can
+match the paper figure perfectly while the figure itself is a smoothed,
+re-fitted, or misquoted representation of an older source. In that case the
+value is not primary-source closed and must remain diagnostic or
+SOURCE_INCOMPLETE until the original source is read.
 
 ## R1 Provenance Completeness
 
@@ -593,6 +660,7 @@ Constraints:
 Audit rounds:
 R-1 Evidence file inventory: list source_evidence files, hashes, types, readability, and missing registry sources.
 R0 Original value check: verify registry values against original source numbers, with source locator and short excerpt.
+R0.5 Primary-source chain check: require relayed sources to trace back to original measurement evidence.
 R1 Provenance completeness: verify DOI/source identity, material specificity, condition, and locator precision.
 R2 Evidence grade check: detect inflated grades; direct same-system measured > derived > digitized > inferred > proxy.
 R3 Duplicate, lineage, and conflict check: detect repeated secondary values and conflicting source values.
@@ -601,6 +669,7 @@ R5 Baseline admission check: decide whether each parameter can enter baseline.
 
 Rules:
 - Figures are DIGITIZED_APPROXIMATE, never SOURCE_DIRECT.
+- Reviews, compiled tables, secondary figures, secondary fits, digitized plots, and literature ranges require primary_source_id and a verified provenance_chain before baseline use.
 - Derived or inferred values must be labeled as such.
 - Values not found in the source are BLOCK and must include search evidence.
 - Conflicting values require conflict_set, likely_reason, recommended_status, and baseline_allowed=false unless an accepted decision exists.

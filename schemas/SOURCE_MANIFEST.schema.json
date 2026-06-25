@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Jackber-svg/tracegate-research/schemas/SOURCE_MANIFEST.schema.json",
+  "title": "TraceGate Research SOURCE_MANIFEST.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "sources"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["source_id", "source_class"],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_class": {
+            "enum": [
+              "primary_measurement",
+              "primary_experiment",
+              "primary_dataset",
+              "primary_datasheet",
+              "direct_measurement",
+              "lab_measurement",
+              "instrument_export",
+              "standard",
+              "secondary_source",
+              "secondary_figure",
+              "secondary_fit",
+              "compiled_table",
+              "review",
+              "literature_range",
+              "figure_digitized",
+              "digitized_fit",
+              "model_fit_from_literature_figure",
+              "derived_from_secondary",
+              "transcribed_secondary",
+              "proxy"
+            ]
+          },
+          "primary_source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance_decision_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance_chain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["source_id", "role", "verification_status"],
+              "properties": {
+                "source_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "role": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "verification_status": {
+                  "enum": [
+                    "VERIFIED",
+                    "PRIMARY_SOURCE_VERIFIED",
+                    "VERIFIED_AGAINST_PRIMARY",
+                    "VERIFIED_AGAINST_PARENT",
+                    "CROSS_CHECKED_TO_PRIMARY"
+                  ]
+                },
+                "artifact_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "locator": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["parameter", "encoded_value"],
+        "properties": {
+          "parameter": {
+            "type": "string",
+            "minLength": 1
+          },
+          "encoded_value": {
+            "type": "object"
+          },
+          "original_value": {
+            "type": "object"
+          },
+          "conversion_factor": {
+            "type": "number"
+          },
+          "conversion_note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

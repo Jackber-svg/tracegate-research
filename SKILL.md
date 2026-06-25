@@ -43,7 +43,8 @@ For literature-derived parameter extraction or source-evidence audits, also read
 4. When a project directory exists, run `python runner/tracegate_check.py <project_dir>` before relying on agent judgment.
 5. After an intentional file edit, use `python runner/tracegate_fix_hashes.py <project_dir>` to refresh declared hashes, then rerun `tracegate_check.py`.
 6. For parameterized or literature-derived projects, require `PARAMETER_REGISTRY.json` and use `SOURCE_MANIFEST.json` when source locking is declared.
-   - For literature extraction from PDFs, text, webpages, tables, figures, or supplementary files, use `references/literature_extraction.md` and run the R-1 to R5 audit before strengthening any `source_status`.
+   - For literature extraction from PDFs, text, webpages, tables, figures, or supplementary files, use `references/literature_extraction.md` and run the full R-1 to R5 audit, including R0.5 primary-source chain closure, before strengthening any `source_status`.
+   - For relayed sources such as reviews, compiled tables, fitted curves, digitized figures, or secondary plots, require `primary_source_id` and a verified `provenance_chain` before allowing baseline use.
 7. For tool-backed models, require `ADAPTER.yaml` and adapter-exported `MODEL_STATE.json`.
 8. For baseline promotion, use `python runner/tracegate_promote.py <project_dir>` only after checks pass and zero open decisions remain.
 9. Use optional focused runners when corresponding files exist:
@@ -67,6 +68,7 @@ Stop and report `BLOCK` when:
 - `tracegate_promote.py` refuses promotion or post-promotion check does not pass.
 - A parameter has `SOURCE_INCOMPLETE` without an accepted decision.
 - A source value, encoded value, unit conversion, or implementation value cannot be reconciled.
+- A baseline parameter cites a relayed literature source without a verified primary-source provenance chain.
 - An extension is disabled but active runtime artifacts still contain forbidden tokens.
 - KPI/domain metrics pass but `equation_form_gate` fails.
 - `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, `tracegate_extension_scan.py`, or `tracegate_kpi_check.py` returns `BLOCK`.

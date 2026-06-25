@@ -8,11 +8,11 @@ The toolkit addresses a recurring failure mode in agent-assisted research: as co
 
 TraceGate treats the workflow as an auditable state machine. Contracts define acceptable evidence, manifests bind artifacts to hashes, decision logs record exceptions, and gate reports control continuation. Dependency-free runners check state closure, schemas, decisions, source locks, equation forms, extension residues, and baseline promotion.
 
-The runner layer automates the routine checks that agents most often skip. It can initialize a minimal project, verify hashes and manifests, repair declared hash chains after intentional edits, audit decisions, compare registered parameters against source manifests, detect equation-form drift, scan disabled extensions for residual tokens, evaluate configured numeric KPI thresholds, and promote only passing states to `BASELINE`.
+The runner layer automates the routine checks that agents most often skip. It can initialize a minimal project, verify hashes and manifests, repair declared hash chains after intentional edits, audit decisions, compare registered parameters against source manifests, require primary-source provenance for relayed literature values, detect equation-form drift, scan disabled extensions for residual tokens, evaluate configured numeric KPI thresholds, and promote only passing states to `BASELINE`.
 
 TraceGate is fail-closed by default. It does not prove that a result is true, but makes unsupported continuation visible and mechanically harder. The current release includes schemas, a passing fixture, regression tests, GitHub Actions CI, and line-ending controls that keep cloned fixtures hash-stable across platforms.
 
-TraceGate also includes a literature extraction subworkflow for source-derived parameters. It adds an R-1 evidence-file inventory and an R0 original-value check before ordinary registry audits: every registry value must be traced back to a readable local source file and the actual table cell, figure, equation, caption, supplementary file, or text line that supports it. Figure-derived values are marked as digitized approximations; inferred and derived values must carry formulas, assumptions, and decisions; values not found in the cited source block baseline use.
+TraceGate also includes a literature extraction subworkflow for source-derived parameters. It adds an R-1 evidence-file inventory, an R0 original-value check, and an R0.5 primary-source chain check before ordinary registry audits: every registry value must be traced back to a readable local source file and the actual table cell, figure, equation, caption, supplementary file, or text line that supports it. If that local source is a relayed source, such as a review, compiled table, fitted curve, digitized figure, or secondary plot, it must also point to the original measurement source and a verified provenance chain. Figure-derived values are marked as digitized approximations; inferred and derived values must carry formulas, assumptions, and decisions; values not found in the cited source, or relayed values without primary-source closure, block baseline use.
 
 ## Design Goals
 
@@ -117,11 +117,12 @@ For literature-derived parameters, read:
 references/literature_extraction.md
 ```
 
-This subworkflow audits a registry against downloaded evidence in `source_evidence/` using seven rounds:
+This subworkflow audits a registry against downloaded evidence in `source_evidence/` using eight rounds:
 
 ```text
 R-1 evidence file inventory
 R0 original value check
+R0.5 primary-source chain check
 R1 provenance check
 R2 evidence grade check
 R3 duplicate, lineage, and conflict check

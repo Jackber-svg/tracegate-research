@@ -113,6 +113,109 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertEqual(report["status"], "BLOCK")
 
+    def test_source_check_blocks_relay_source_without_primary_chain(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "PARAMETER_REGISTRY.json",
+            {
+                "version": "1.0",
+                "rows": [
+                    {
+                        "parameter": "D_Li_CF",
+                        "value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                        "baseline_allowed": True,
+                        "source_status": "SOURCE_VERIFIED",
+                        "source_anchor": {"source_id": "LARSSON_FIG7"},
+                        "comparison": {"tolerance": 0.0},
+                    }
+                ],
+            },
+        )
+        write_json(
+            root / "SOURCE_MANIFEST.json",
+            {
+                "version": "1.0",
+                "sources": [
+                    {
+                        "source_id": "LARSSON_FIG7",
+                        "source_class": "figure_digitized",
+                    }
+                ],
+                "values": [
+                    {
+                        "parameter": "D_Li_CF",
+                        "encoded_value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                        "original_value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_source_check.py", root)
+        self.assertEqual(code, 2)
+        self.assertEqual(report["status"], "BLOCK")
+        self.assertTrue(any(check["code"] == "primary_source_missing" for check in report["checks"]))
+
+    def test_source_check_accepts_verified_relay_chain(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "PARAMETER_REGISTRY.json",
+            {
+                "version": "1.0",
+                "rows": [
+                    {
+                        "parameter": "D_Li_CF",
+                        "value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                        "baseline_allowed": True,
+                        "source_status": "SOURCE_INCOMPLETE",
+                        "source_decision_id": "D-SRC-001",
+                        "source_anchor": {"source_id": "LARSSON_FIG7"},
+                        "comparison": {"tolerance": 0.0},
+                    }
+                ],
+            },
+        )
+        write_json(
+            root / "SOURCE_MANIFEST.json",
+            {
+                "version": "1.0",
+                "sources": [
+                    {
+                        "source_id": "KJELL_ORIGINAL",
+                        "source_class": "primary_measurement",
+                    },
+                    {
+                        "source_id": "LARSSON_FIG7",
+                        "source_class": "figure_digitized",
+                        "primary_source_id": "KJELL_ORIGINAL",
+                        "provenance_decision_id": "D-SRC-001",
+                        "provenance_chain": [
+                            {
+                                "source_id": "KJELL_ORIGINAL",
+                                "role": "primary_measurement",
+                                "verification_status": "PRIMARY_SOURCE_VERIFIED",
+                            },
+                            {
+                                "source_id": "LARSSON_FIG7",
+                                "role": "digitized_fit",
+                                "verification_status": "VERIFIED_AGAINST_PRIMARY",
+                            },
+                        ],
+                    },
+                ],
+                "values": [
+                    {
+                        "parameter": "D_Li_CF",
+                        "encoded_value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                        "original_value": {"type": "number", "data": 1.0, "unit": "m2/s"},
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_source_check.py", root)
+        self.assertEqual(code, 0)
+        self.assertEqual(report["status"], "PASS")
+        self.assertTrue(any(check["code"] == "primary_provenance_chain" for check in report["checks"]))
+
     def test_equation_check_blocks_forbidden_term(self) -> None:
         root = self.make_project()
         write_json(

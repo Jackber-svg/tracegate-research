@@ -24,7 +24,7 @@ At minimum, inspect these sections:
 - Checkpoint Rule
 - Release Readiness Checklist
 
-For literature extraction, run the R-1 to R5 workflow before strengthening any registry `source_status` or treating a parameter as source-supported.
+For literature extraction, run the full R-1 to R5 workflow, including the R0.5 primary-source chain check, before strengthening any registry `source_status` or treating a parameter as source-supported.
 
 ## Operating Rule
 
@@ -60,6 +60,7 @@ Report `BLOCK` instead of continuing when:
 - artifact manifest hash does not match `STATE.json`
 - source values, unit conversions, or implementation values cannot be reconciled
 - a registry value cannot be found in the cited source evidence
+- a baseline parameter relies on a relayed source without `primary_source_id` and a verified `provenance_chain`
 - `SOURCE_INCOMPLETE` lacks an accepted decision
 - an extension is disabled but active runtime artifacts still contain forbidden tokens
 - KPI/domain gates pass but equation-form gates fail
