@@ -1,6 +1,6 @@
 ---
 name: tracegate
-description: Runner-backed fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, literature extraction from source evidence, source provenance checks, equation-form checks, extension residual scans, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
+description: Runner-backed fail-closed evidence and checkpoint governance for long-running research agent projects. Use when Codex needs to set up, audit, repair, or follow a gate-driven workflow for scientific modeling, computational simulation, research-code generation, literature-derived parameter audits, literature extraction from source evidence, source provenance checks, equation-form checks, symbolic derivative consistency checks, extension residual scans, agent handoffs, cold-start recovery, reproducible research checkpoints, or any research project where contracts, sources, artifacts, decisions, and gate reports must be file-grounded rather than remembered from chat.
 ---
 
 # TraceGate Research
@@ -52,6 +52,7 @@ For literature-derived parameter extraction or source-evidence audits, also read
    - `tracegate_decision_audit.py` for decision approvals and STATE sync.
    - `tracegate_source_check.py` for parameter/source consistency.
    - `tracegate_equation_check.py` for equation-form closure.
+   - `tracegate_derivative_check.py` for declared function/derivative consistency in `EQUATION_MANIFEST.json`.
    - `tracegate_extension_scan.py` for residual extension tokens.
    - `tracegate_kpi_check.py` for configured numeric KPI thresholds in `PHYSICAL_KPI_GATES.json`.
 
@@ -71,7 +72,8 @@ Stop and report `BLOCK` when:
 - A baseline parameter cites a relayed literature source without a verified primary-source provenance chain.
 - An extension is disabled but active runtime artifacts still contain forbidden tokens.
 - KPI/domain metrics pass but `equation_form_gate` fails.
-- `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, `tracegate_extension_scan.py`, or `tracegate_kpi_check.py` returns `BLOCK`.
+- `EQUATION_MANIFEST.json` declares function/derivative pairs and `tracegate_derivative_check.py` finds a symbolic mismatch.
+- `tracegate_schema_check.py`, `tracegate_decision_audit.py`, `tracegate_source_check.py`, `tracegate_equation_check.py`, `tracegate_derivative_check.py`, `tracegate_extension_scan.py`, or `tracegate_kpi_check.py` returns `BLOCK`.
 - External audit has unresolved `BLOCK` or `CRITICAL` findings.
 
 ## Output Style

@@ -28,6 +28,7 @@ OPTIONAL_JSON_SCHEMA_MAP = {
     "LEGACY_GATE_BINDINGS.json": REPO_ROOT / "schemas" / "LEGACY_GATE_BINDINGS.schema.json",
     "PHYSICAL_KPI_GATES.json": REPO_ROOT / "schemas" / "PHYSICAL_KPI_GATES.schema.json",
     "SOURCE_MANIFEST.json": REPO_ROOT / "schemas" / "SOURCE_MANIFEST.schema.json",
+    "EQUATION_MANIFEST.json": REPO_ROOT / "schemas" / "EQUATION_MANIFEST.schema.json",
 }
 
 

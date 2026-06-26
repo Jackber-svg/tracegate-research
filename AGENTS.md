@@ -39,6 +39,7 @@ DECISIONS.jsonl
 GATE_REPORTS/
 PARAMETER_REGISTRY.json
 SOURCE_MANIFEST.json
+EQUATION_MANIFEST.json
 ```
 
 ## Minimal Runner
@@ -63,6 +64,7 @@ Report `BLOCK` instead of continuing when:
 - a baseline parameter relies on a relayed source without `primary_source_id` and a verified `provenance_chain`
 - `SOURCE_INCOMPLETE` lacks an accepted decision
 - an extension is disabled but active runtime artifacts still contain forbidden tokens
+- `EQUATION_MANIFEST.json` declares a function/derivative pair whose symbolic derivative does not match the declared derivative
 - KPI/domain gates pass but equation-form gates fail
 - external audit has unresolved `BLOCK` or `CRITICAL` findings
 

@@ -255,6 +255,65 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertEqual(report["status"], "BLOCK")
 
+    def test_derivative_check_passes_consistent_pair(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "EQUATION_MANIFEST.json",
+            {
+                "version": "1.0",
+                "derivative_pairs": [
+                    {
+                        "pair_id": "mu_cf",
+                        "function_id": "mu_CF_thermo_core",
+                        "derivative_id": "dmu_dc_CF_core",
+                        "with_respect_to": "ctilde_CF",
+                    }
+                ],
+            },
+        )
+        write_json(
+            root / "runtime_expression_dump.json",
+            {
+                "expressions": [
+                    {
+                        "id": "mu_CF_thermo_core",
+                        "expression": "mu0 - R*T*k_CF*log(ctilde_CF)",
+                    },
+                    {
+                        "id": "dmu_dc_CF_core",
+                        "expression": "-R*T*k_CF/ctilde_CF",
+                    },
+                ]
+            },
+        )
+        code, report = run_runner("tracegate_derivative_check.py", root)
+        self.assertEqual((code, report["status"]), (0, "PASS"))
+        self.assertTrue(any(check["code"] == "derivative_consistency" for check in report["checks"]))
+
+    def test_derivative_check_blocks_wrong_declared_derivative(self) -> None:
+        root = self.make_project()
+        write_json(
+            root / "EQUATION_MANIFEST.json",
+            {
+                "version": "1.0",
+                "derivative_pairs": [
+                    {
+                        "pair_id": "mu_cf",
+                        "function_expression": "mu0 - R*T*k_CF*log(ctilde_CF)",
+                        "derivative_expression": "-2*k_CF/ctilde_CF",
+                        "with_respect_to": "ctilde_CF",
+                    }
+                ],
+            },
+        )
+        code, report = run_runner("tracegate_derivative_check.py", root)
+        self.assertEqual((code, report["status"]), (2, "BLOCK"))
+        self.assertTrue(any(check["code"] == "derivative_consistency_mismatch" for check in report["checks"]))
+
+        core_code, core_report = run_runner("tracegate_check.py", root)
+        self.assertEqual((core_code, core_report["status"]), (2, "BLOCK"))
+        self.assertTrue(any(check["code"] == "derivative_consistency_mismatch" for check in core_report["checks"]))
+
     def test_extension_scan_uses_contract_runtime_artifacts(self) -> None:
         root = self.make_project()
         (root / "custom_runtime.txt").write_text("active forbiddenToken here\n", encoding="utf-8")

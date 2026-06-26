@@ -11,10 +11,12 @@ needs before an agent can safely continue:
 - manifest-listed local artifacts exist and match their hashes
 - DECISIONS.jsonl has no malformed rows
 - BASELINE mode has no open decisions
+- declared symbolic derivative pairs are internally consistent
 
 It is intentionally conservative. It does not prove scientific correctness and
-does not execute domain gates. It catches the basic state, hash, and decision
-failures that agents are most likely to hand-wave past.
+does not execute domain-specific solvers. It catches the basic state, hash,
+decision, and declared formula-consistency failures that agents are most likely
+to hand-wave past.
 """
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ if str(RUNNER_DIR) not in sys.path:
     sys.path.insert(0, str(RUNNER_DIR))
 
 from tracegate_common import Check, load_json, read_jsonl, rel, sha256_file, status_code
+from tracegate_derivative_check import run as run_derivative_check
 
 
 VALID_MODES = {"DISCOVERY", "STAGING", "VALIDATION", "BASELINE"}
@@ -248,6 +251,25 @@ class Runner:
         else:
             self.add("WARN", "last_checkpoint_not_pass", "last checkpoint does not declare all_required_gates_pass=true")
 
+    def check_derivative_consistency(self) -> None:
+        manifest_path = self.project / "EQUATION_MANIFEST.json"
+        if not manifest_path.is_file():
+            return
+        manifest, err = load_json(manifest_path)
+        if err or not isinstance(manifest, dict):
+            return
+        pairs = manifest.get("derivative_pairs", manifest.get("derivatives"))
+        if not isinstance(pairs, list) or not pairs:
+            return
+        report = run_derivative_check(self.project)
+        for item in report.get("checks", []):
+            if isinstance(item, dict):
+                self.add(
+                    str(item.get("status", "BLOCK")),
+                    str(item.get("code", "derivative_check")),
+                    str(item.get("message", "")),
+                )
+
     def run(self) -> dict[str, Any]:
         self.check_required_files()
         self.check_state()
@@ -257,6 +279,7 @@ class Runner:
         self.check_decisions()
         self.check_current_artifact()
         self.check_last_checkpoint()
+        self.check_derivative_consistency()
         if any(c.status == "BLOCK" for c in self.checks):
             status = "BLOCK"
         elif any(c.status == "WARN" for c in self.checks):

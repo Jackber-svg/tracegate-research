@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TraceGate EQUATION_MANIFEST",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "equations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["equation_id"],
+        "properties": {
+          "equation_id": {"type": "string", "minLength": 1},
+          "id": {"type": "string", "minLength": 1},
+          "term_count": {"type": "integer"},
+          "nonlinearity_class": {"type": "string"},
+          "variable_list": {"type": "array", "items": {"type": "string"}},
+          "sign_vector": {"type": "array", "items": {"type": "string"}},
+          "required_terms": {"type": "array", "items": {"type": "string"}},
+          "forbidden_terms": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "derivative_pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pair_id", "with_respect_to"],
+        "properties": {
+          "pair_id": {"type": "string", "minLength": 1},
+          "id": {"type": "string", "minLength": 1},
+          "function_id": {"type": "string", "minLength": 1},
+          "function": {"type": "string", "minLength": 1},
+          "source_id": {"type": "string", "minLength": 1},
+          "derivative_id": {"type": "string", "minLength": 1},
+          "derivative_declared": {"type": "string", "minLength": 1},
+          "declared_derivative_id": {"type": "string", "minLength": 1},
+          "function_expression": {"type": "string", "minLength": 1},
+          "source_expression": {"type": "string", "minLength": 1},
+          "mu_expression": {"type": "string", "minLength": 1},
+          "derivative_expression": {"type": "string", "minLength": 1},
+          "declared_derivative_expression": {"type": "string", "minLength": 1},
+          "dmu_dc_expression": {"type": "string", "minLength": 1},
+          "with_respect_to": {"type": "string", "minLength": 1},
+          "derivative_var": {"type": "string", "minLength": 1},
+          "variable": {"type": "string", "minLength": 1},
+          "numeric_tolerance": {"type": "number"},
+          "tolerance": {"type": "number"},
+          "fail_level": {"enum": ["BLOCK", "WARN"]}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

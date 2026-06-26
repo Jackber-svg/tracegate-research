@@ -13,7 +13,7 @@ Do not trust memory, summaries, or good-looking outputs.
 Trust only files, hashes, gates, manifests, decisions, and reproducible artifacts.
 ```
 
-Gate-Driven Agent does not prove that a result is true. It makes drift, missing evidence, proxy use, source-copy errors, equation simplification, extension leakage, and self-audit leniency visible early enough to stop them.
+Gate-Driven Agent does not prove that a result is true. It makes drift, missing evidence, proxy use, source-copy errors, equation simplification, derivative inconsistency, extension leakage, and self-audit leniency visible early enough to stop them.
 
 ## Six Questions
 
@@ -45,6 +45,7 @@ project/
   PARAMETER_REGISTRY.json          full profile or parameterized projects
   SOURCE_MANIFEST.json             when source_lock_gate is declared
   EQUATION_MANIFEST.json           when equation_form_gate is declared
+                                    also declares derivative_pairs for derivative_consistency_gate
   EXTENSION_KEYWORD_MANIFEST.json  when extension_residual_gate is declared
   PHYSICAL_KPI_GATES.json          when numeric KPI gates are declared
   UNIT_REGISTRY.json               when unit normalization is used
@@ -134,7 +135,7 @@ Publishable or handoff-authoritative state. No OPEN decisions.
 | DISCOVERY | contract_load_gate, schema_gate, manifest_gate, action_gate | decision_sync_gate, artifact_existence_gate |
 | STAGING | contract_load_gate, schema_gate, hash_gate, manifest_gate, action_gate | registry_gate, adapter_export_gate if adapter capable, unit_normalization_gate if units exist |
 | VALIDATION | contract_load_gate, schema_gate, hash_gate, manifest_gate, action_gate | adapter gates, registry_closure_gate, source_lock_gate when declared, decision_gate, decision_sync_gate, external_audit_gate when declared, non-optional domain gates |
-| BASELINE | contract_load_gate, schema_gate, hash_gate, manifest_gate, action_gate | all required adapter gates, registry_closure_gate, source_lock_gate when declared, extension_residual_gate when declared, equation_form_gate when declared, decision_gate, decision_sync_gate, external_audit_gate when declared, non-optional domain gates, zero OPEN decisions |
+| BASELINE | contract_load_gate, schema_gate, hash_gate, manifest_gate, action_gate | all required adapter gates, registry_closure_gate, source_lock_gate when declared, extension_residual_gate when declared, equation_form_gate when declared, derivative_consistency_gate when declared, decision_gate, decision_sync_gate, external_audit_gate when declared, non-optional domain gates, zero OPEN decisions |
 
 Domain gates are required by default. They can be optional only if the rule has `optional: true` and a non-empty `optional_reason`.
 
@@ -249,6 +250,21 @@ rules:
     fail_level: BLOCK
     output_artifact: GATE_REPORTS/equation_form.json
     skip_if: runtime_expression_dump_not_available
+
+  - id: DER01
+    layer: core
+    category: derivative_consistency_gate
+    check_type: derivative_consistency_check
+    input_file: EQUATION_MANIFEST.json
+    params:
+      derivative_pairs_key: derivative_pairs
+      runtime_expression_dump: runtime_expression_dump.json
+      compare:
+        - symbolic_derivative
+        - numeric_cross_check
+      default_numeric_tolerance: 1.0e-8
+    fail_level: BLOCK
+    output_artifact: GATE_REPORTS/derivative_consistency.json
 ```
 
 ## 6. Gate Categories
@@ -271,6 +287,7 @@ rules:
 | source_lock_gate | source_original_value_cross_check, primary_provenance_chain_check, unit_conversion_check | declared or SOURCE_MANIFEST exists |
 | extension_residual_gate | extension_residual_scan | declared or EXTENSION_KEYWORD_MANIFEST exists |
 | equation_form_gate | equation_form_check, cross_artifact_match | declared or EQUATION_MANIFEST exists |
+| derivative_consistency_gate | derivative_consistency_check | declared or EQUATION_MANIFEST.derivative_pairs exists |
 | artifact_existence_gate | artifact_existence_check, json_array_scan, hash_verify | full profile |
 | unit_normalization_gate | unit_normalization_check, unit_conversion_check | units present |
 | adapter_capability_gate | adapter_capability_check | adapter exists |
@@ -284,7 +301,7 @@ rules:
 | conservation_gate | domain_conservation_check, domain_metric_check, numeric_kpi_threshold_check | contract-dependent |
 | range_gate | domain_range_check, domain_metric_check, numeric_kpi_threshold_check | contract-dependent |
 
-KPI or domain gates cannot override `source_lock_gate`, `equation_form_gate`, `extension_residual_gate`, or `contract_load_gate`.
+KPI or domain gates cannot override `source_lock_gate`, `equation_form_gate`, `derivative_consistency_gate`, `extension_residual_gate`, or `contract_load_gate`.
 
 ## 7. Consolidated Check Types
 
@@ -332,6 +349,14 @@ These check types are the release minimum. Detailed schemas should live in `sche
     "equation_manifest": "EQUATION_MANIFEST.json",
     "runtime_expression_dump": "runtime_expression_dump.json",
     "compare": ["term_count", "variable_list", "nonlinearity_class", "sign_vector", "required_terms", "forbidden_terms"]
+  },
+  "derivative_consistency_check": {
+    "equation_manifest": "EQUATION_MANIFEST.json",
+    "derivative_pairs_key": "derivative_pairs",
+    "runtime_expression_dump": "runtime_expression_dump.json",
+    "compare": ["symbolic_derivative", "numeric_cross_check"],
+    "default_numeric_tolerance": 1e-8,
+    "fail_on_unsupported_expression": true
   },
   "external_audit_check": {
     "audit_artifact": "GATE_REPORTS/external_audit.json",
@@ -631,7 +656,39 @@ KPI gates cannot override equation_form_gate.
 
 For code projects, this maps to interface signatures, call graphs, imports, and algorithm classes. For data analysis, it maps to declared statistical formulas versus executed model calls.
 
-## 13. External Audit
+## 13. Derivative Consistency Gate
+
+Equation shape can be correct while a manually written derivative is wrong. This is especially dangerous in simulation builders because a wrong derivative can compile, solve, and produce plausible-looking fields while shifting the physics.
+
+Use `derivative_consistency_gate` when the project declares a source expression and a separately implemented derivative, Jacobian term, sensitivity, chemical-potential derivative, constitutive tangent, or gradient expression.
+
+```json
+{
+  "version": "1.0",
+  "derivative_pairs": [{
+    "pair_id": "mu_cf_derivative",
+    "function_id": "mu_CF_thermo_core",
+    "derivative_id": "dmu_dc_CF_core",
+    "with_respect_to": "ctilde_CF",
+    "numeric_tolerance": 1e-8
+  }]
+}
+```
+
+Rules:
+
+```text
+For each declared pair, extract the source expression and declared derivative.
+Compute the symbolic derivative with respect to the declared variable.
+Cross-check the computed derivative and declared derivative numerically at multiple positive sample points.
+If parsing, symbolic differentiation, or evaluation is unsupported, BLOCK rather than PASS.
+If the declared derivative differs from the computed derivative, BLOCK.
+KPI gates and solver success cannot override derivative_consistency_gate.
+```
+
+This gate is independent of external literature. It checks internal mathematical self-consistency before expensive solvers, domain KPIs, or publication-facing claims.
+
+## 14. External Audit
 
 Agents are lenient toward their own work. Critical promotions should support external audit.
 
@@ -647,7 +704,7 @@ external_audit_gate passes only if:
 
 External audit is optional in DISCOVERY and STAGING, but recommended for BASELINE if the project contains scientific claims, irreversible edits, expensive simulation outputs, manuscript-facing artifacts, or public research deliverables.
 
-## 14. Startup Protocol
+## 15. Startup Protocol
 
 Every new session must start from the project directory, not the chat transcript.
 
@@ -666,10 +723,11 @@ Every new session must start from the project directory, not the chat transcript
 12. If source_lock_gate is required, read SOURCE_MANIFEST.json and run source_original_value_cross_check plus primary_provenance_chain_check.
 13. If adapter exists, read ADAPTER.yaml, validate capabilities, and run adapter_export if required.
 14. If equation_form_gate is required and adapter has extract_expressions, run equation_form_check after adapter_export.
-15. If extension_residual_gate is required, run extension_residual_scan.
-16. Run external_audit_gate if declared.
-17. Run all required non-optional domain gates. If PHYSICAL_KPI_GATES.json exists, run tracegate_kpi_check.py.
-18. Answer cold-start questions and update next_allowed_actions.
+15. If derivative_consistency_gate is required or EQUATION_MANIFEST.derivative_pairs exists, run derivative_consistency_check before solver/KPI/domain gates.
+16. If extension_residual_gate is required, run extension_residual_scan.
+17. Run external_audit_gate if declared.
+18. Run all required non-optional domain gates. If PHYSICAL_KPI_GATES.json exists, run tracegate_kpi_check.py.
+19. Answer cold-start questions and update next_allowed_actions.
 ```
 
 Cold-start questions:
@@ -686,10 +744,11 @@ Which decisions remain OPEN?
 Which parameters are SOURCE_INCOMPLETE?
 Which extensions are forbidden?
 Which equation forms are locked?
+Which function/derivative pairs are locked?
 What is the external anchor status?
 ```
 
-## 15. P0 Handoff Hardening Pattern
+## 16. P0 Handoff Hardening Pattern
 
 Many research projects first adopt TraceGate after work has already accumulated: old reports exist, duplicate directories exist, and the current state may be a legitimate `WARN` rather than a clean `PASS`. In this situation, the first useful goal is not full scientific automation. It is to prevent handoff accidents.
 
@@ -742,7 +801,7 @@ I know which claims are blocked.
 I know what diagnostic work may continue.
 ```
 
-## 16. Checkpoint Rule
+## 17. Checkpoint Rule
 
 A checkpoint is valid only when:
 
@@ -757,7 +816,7 @@ CONTRACT file hashes match STATE.contract.files
 
 Failed or partial work may be archived as evidence, but must not overwrite the last verified baseline.
 
-## 17. Release Readiness Checklist
+## 18. Release Readiness Checklist
 
 ```text
 [ ] contract_load_gate runs before every other gate.
@@ -779,13 +838,15 @@ Failed or partial work may be archived as evidence, but must not overwrite the l
 [ ] extension_residual_scan checks MODEL_STATE, expression dumps, and source trees.
 [ ] equation_form_check runs before KPI or domain metric gates.
 [ ] KPI gates cannot override equation_form_gate.
+[ ] derivative_consistency_check runs before solver, KPI, or domain metric gates when derivative_pairs are declared.
+[ ] KPI gates and solver success cannot override derivative_consistency_gate.
 [ ] If PHYSICAL_KPI_GATES.json exists, tracegate_kpi_check.py runs and reports PASS/WARN/BLOCK separately from tracegate_check.py.
 [ ] external_audit_gate can block unresolved external findings.
 [ ] Cold-start test passes from project directory only.
 [ ] Dummy project passes all required gates in STAGING mode.
 ```
 
-## 18. Packaging as a Skill
+## 19. Packaging as a Skill
 
 For an agent skill, keep `SKILL.md` short and route detail into files:
 
@@ -813,6 +874,7 @@ runner/
   tracegate_decision_audit.py
   tracegate_source_check.py
   tracegate_equation_check.py
+  tracegate_derivative_check.py
   tracegate_extension_scan.py
   tracegate_kpi_check.py
   gate_runner.py
